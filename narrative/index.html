@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>CEO Bench demo narrative · Turing</title>
+<style>
+@font-face{font-family:Poppins;src:url('../prototype/assets/Poppins-Regular.ttf') format('truetype');font-weight:400;font-display:swap}
+@font-face{font-family:Poppins;src:url('../prototype/assets/Poppins-SemiBold.ttf') format('truetype');font-weight:600;font-display:swap}
+:root{--ink:#111;--muted:#5d6068;--line:#dedee2;--blue:#003f9b;--bright:#317eff;--pale:#eefbff}
+*{box-sizing:border-box}body{font:14px/1.7 Poppins,Arial,sans-serif;margin:0;color:var(--ink);background:#fff}
+h1,h2,h3,p{margin:0}h1,h2{font-weight:400;line-height:1.2}a{color:var(--blue)}
+header{display:flex;align-items:center;gap:20px;padding:16px 28px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+header span{font-size:12px;margin-right:auto}header i{color:#a3a3a8;font-style:normal;margin:0 6px}header a{font-size:12px;text-decoration:none}
+main{max-width:900px;margin:auto;padding:40px 28px 64px}
+h1{font-size:40px;letter-spacing:-1.2px;margin:8px 0 10px}.eyebrow{font-size:12px;color:var(--blue)}.lede{color:var(--muted);margin-bottom:28px}
+nav{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:32px}nav a{font-size:11px;border:1px solid var(--line);border-radius:3px;padding:4px 9px;text-decoration:none;color:var(--muted)}
+section{border-top:1px solid var(--line);padding:28px 0}
+h2{font-size:26px;margin:6px 0 4px}.sub{color:var(--muted);font-size:13px;margin-bottom:16px}
+.say{background:var(--pale);border-left:3px solid var(--bright);padding:18px 20px;font-size:15px;line-height:1.8;margin-bottom:16px}
+h3{font-size:12px;font-weight:600;color:var(--blue);margin-bottom:4px}
+.block{margin-bottom:14px;font-size:13px}.open{font-size:12px}
+@media(max-width:700px){main,header{padding-left:16px;padding-right:16px}h1{font-size:30px}h2{font-size:22px}}
+@media print{nav,header a,.open{display:none}section{break-inside:avoid}}
+</style></head><body>
+<header><img src="../prototype/assets/turing-logo.svg" alt="Turing" width="150"><span>CEO Bench <i>/</i> Demo narrative</span><a href="../prototype/" target="_blank" rel="noopener">Open the prototype ↗</a></header>
+<main id="main"></main>
+<script src="../prototype/content.js"></script>
+<script>
+const esc=v=>String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+document.querySelector('#main').innerHTML=`<span class="eyebrow">Facilitator script · ${STEPS.length} steps · ${STEPS.at(-1).time.split('–')[1].split(':')[0]} minutes</span><h1>What to say and do at each step</h1><p class="lede">The talk track for the CEO Bench live demo. Each step matches the same step number in the prototype. Agent runs, training, and scores in the prototype are simulated; the “Disclose” notes say what to make clear to the audience.</p><nav aria-label="Steps">${STEPS.map((s,i)=>`<a href="#step-${i+1}">${i+1} · ${esc(s.title)}</a>`).join('')}</nav>${STEPS.map((s,i)=>`<section id="step-${i+1}"><span class="eyebrow">Step ${i+1} · ${esc(s.act)} · ${s.time}</span><h2>${esc(s.title)}</h2><p class="sub">${esc(s.sub)}</p><div class="say"><h3>Say</h3>${esc(s.say)}</div><div class="block"><h3>Do</h3>${esc(s.cue)}</div><div class="block"><h3>Disclose</h3>${esc(s.disclose)}</div><a class="open" href="../prototype/#step-${i+1}" target="_blank" rel="noopener">Open step ${i+1} in the prototype ↗</a></section>`).join('')}`;
+</script></body></html>
