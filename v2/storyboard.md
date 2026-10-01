@@ -40,7 +40,7 @@ Open index.html for the interactive storyboard. Select any scene for its propose
 | 11 | 79:00–82:00 | Training the agent | Train the agent on expert data |
 | 12 | 82:00–84:00 | Training the agent | Run the trained agent |
 | 13 | 84:00–87:00 | Training the agent | Evaluate the trained agent again |
-| 14 | 87:00–89:00 | Training the agent | You trained your own specialized agent |
+| 14 | 87:00–89:00 | Training the agent | Congrats, you trained superintelligence today |
 
 ## Operating assumptions
 
@@ -58,17 +58,17 @@ Open index.html for the interactive storyboard. Select any scene for its propose
 
 **00:00–02:00 · 2 minutes · Act 1: The company**
 
-**Purpose:** Establish the company and the work to be evaluated.
+**Purpose:** Introduce the company and its data. No task yet.
 
 **On screen:** Meet Cirrus Sleep
 
 **Presenter narration**
 
-> Cirrus Sleep is a fictional company built to evaluate artificial intelligence through professional work. Its dataset contains 1,100+ files covering a complete fiscal year. You’ll see how experts turn those records into tasks and define what a correct deliverable must do.
+> Cirrus Sleep is a fictional company built to evaluate artificial intelligence through professional work. Its dataset contains 1,100+ files covering a complete fiscal year: the books, contracts, payroll, board decks, and months of internal Slack. Everything you work with today comes from these files.
 
-**Facilitator action:** Open the company introduction. Keep the company profile and record count visible. Introduce Simulated Virtual Company (SVC) once, then use “the company” in the rest of the walkthrough.
+**Facilitator action:** Open the company introduction. Keep the file count and the 5 data types visible. Introduce Simulated Virtual Company (SVC) once, then use “the company” in the rest of the walkthrough.
 
-**Journalist action:** Read the company profile. Consider what evidence you would need before accepting a financial or operational conclusion.
+**Journalist action:** Nothing to do yet. Listen and look at what kinds of company data exist.
 
 **Evidence and disclosure:** The 1,100+ count comes from the supplied demo outline. Attach the approved corpus manifest to the production asset list. Do not state that fictional origin guarantees permanent protection from training-data contamination.
 
@@ -392,13 +392,13 @@ Open index.html for the interactive storyboard. Select any scene for its propose
 
 **Build status:** New scene. Results screen not yet built; values are placeholders.
 
-### Scene 14 · You trained your own specialized agent
+### Scene 14 · Congrats, you trained superintelligence today
 
 **87:00–89:00 · 2 minutes · Act 5: Training the agent**
 
 **Purpose:** Close on the full loop and what it means for frontier labs.
 
-**On screen:** You trained your own specialized agent
+**On screen:** Congrats, you trained superintelligence today
 
 **Presenter narration**
 
