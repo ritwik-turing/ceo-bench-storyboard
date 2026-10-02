@@ -21,4 +21,6 @@ for (const f of ['index.html','app.js','content.js','data.js','styles.css']) {
   const t = fs.readFileSync(path.join(__dirname, f), 'utf8');
   assert(!t.includes('—'), `${f}: em dash`); if (f !== 'data.js') assert(!/director/i.test(t), `${f}: use Facilitator`); // data.js has a board resolution with director signatures
 }
+const app = fs.readFileSync(path.join(__dirname, 'app.js'), 'utf8');
+assert.equal((app.slice(app.indexOf('const DEMO = ['), app.indexOf('function demoBar')).match(/\{say:/g) || []).length, STEPS.length, 'demo runthrough covers every step');
 console.log('PASS: 14 steps, rubric totals, simulated score contracts, submission checks, and copy rules.');

@@ -130,6 +130,8 @@ function go(n) { S.step = Math.min(STEPS.length, Math.max(1, n)); save(); render
 
 document.addEventListener('click', e => {
  const t = e.target.closest('button'); if (!t) return; const d = t.dataset, w = work(S.pod);
+ if (t.id === 'play') return demo.playing ? stopDemo() : startDemo();
+ if (e.isTrusted && demo.playing) stopDemo(); // a real click takes over from the runthrough
  if (t.id === 'prev') return go(S.step - 1);
  if (t.id === 'next') return go(S.step + 1);
  if (t.id === 'reset') { if (confirm('Clear all pod names, submissions, and results on this browser?')) { S = blank(); save(); render(); } return; }
@@ -166,8 +168,47 @@ document.addEventListener('input', e => {
 });
 document.addEventListener('keydown', e => {
  if ($('#detail').open || e.target.matches('input,textarea') || e.metaKey || e.ctrlKey || e.altKey) return;
+ if (demo.playing && e.key.startsWith('Arrow')) stopDemo();
  if (e.key === 'ArrowRight') go(S.step + 1); else if (e.key === 'ArrowLeft') go(S.step - 1);
 });
+// ---- Demo runthrough. It presses the same controls a person would, so it follows the same rules as a manual run.
+const DEMO_SPEED = 1;
+const demo = {id:0, playing:false, done:false};
+const DEMO = [
+ {say:'Meet the company and open one kind of data', run:async d => { await d.wait(1500); await d.click('[data-detail="type:0"]', 2600); await d.click('[data-act="close-detail"]', 400); }},
+ {say:'Open a real record from the company files', run:async d => { await d.click('[data-file="June bank statement"]', 2800); }},
+ {say:'The executive engagement: prepare for the first audit', run:async d => { await d.wait(2600); }},
+ {say:'Break it into 10 tasks and assign 4 pods', run:async d => { await d.click('[data-act="reveal"]', 1500); for (const [p, n] of [['A','Ana and Ben'],['B','Chloe and Dev'],['C','Emre and Fay'],['D','Gus and Hana']]) await d.type(`[data-name="${p}"]`, n); await d.wait(1800); }},
+ {say:'Each pod gets its task and packet', run:async d => { await d.click('[data-detail="pod:A"]', 2600); await d.click('[data-act="close-detail"]', 400); }},
+ {say:'Pod A writes its reference answer from the evidence', run:async d => { await d.click('[data-act="example"]', 3200); }},
+ {say:'Pod A writes its rubric: 10 checks, 100 points', run:async d => { await d.wait(3200); }},
+ {say:'Pod A submits its task for review', run:async d => { await d.click('[data-act="submit"]', 2200); }},
+ {say:'A baseline agent attempts Pod A’s task', run:async d => { await d.click('[data-act="run-baseline"]'); await d.until(() => S.baseline.A); await d.wait(3200); }},
+ {say:'Pod A grades the agent, 1 check at a time', run:async d => { for (const [i, r] of SEATS.A.rubric.entries()) await d.click(`[data-mark="${i}"][data-v="${r.pass ? 'pass' : 'fail'}"]`, 350, 350); await d.wait(2600); }},
+ {say:'Train the agent on expert data', run:async d => { await d.click('[data-act="train"]'); await d.until(() => S.trained); await d.wait(1500); }},
+ {say:'The trained agent attempts the same task', run:async d => { await d.click('[data-act="run-trained"]'); await d.until(() => S.trainedRun.A); await d.wait(1500); await d.click('[data-detail="diff:"]', 3200); await d.click('[data-act="close-detail"]', 400); }},
+ {say:'Evaluate again with the same rubric', run:async d => { await d.click('[data-act="reeval"]', 4500); }},
+ {say:'Recap: create, evaluate, train, re-evaluate', run:async d => { await d.wait(5000); }}
+];
+function demoBar(i) {
+ $('#demo-bar').hidden = !demo.playing;
+ $('#play').textContent = demo.playing ? '■ Stop demo' : demo.done ? '↻ Replay demo' : '▶ Play demo';
+ if (i === undefined) return;
+ $('#demo-say').textContent = DEMO[i].say; $('#demo-count').textContent = `${i + 1} / ${DEMO.length}`; $('#demo-fill').style.width = `${(i + 1) / DEMO.length * 100}%`;
+}
+function stopDemo() { demo.id++; demo.playing = false; document.querySelectorAll('.demo-target').forEach(el => el.classList.remove('demo-target')); demoBar(); }
+async function startDemo() {
+ if ((Object.keys(S.work).length || S.revealed || S.trained) && !confirm('The demo starts from a clean session. Clear the current work on this browser?')) return;
+ const id = ++demo.id; demo.playing = true; demo.done = false; $('#detail').close(); S = blank(); save();
+ const wait = ms => new Promise((res, rej) => setTimeout(() => id === demo.id ? res() : rej('stopped'), ms / DEMO_SPEED));
+ const d = {wait,
+  async click(sel, after = 0, before = 700) { const el = $(sel); if (!el) return; el.scrollIntoView({block:'center', behavior:'smooth'}); el.classList.add('demo-target'); await wait(before); el.classList.remove('demo-target'); el.click(); await wait(after); },
+  async type(sel, text) { const el = $(sel); if (!el) return; el.classList.add('demo-target'); for (let n = 1; n <= text.length; n++) { el.value = text.slice(0, n); await wait(35); } el.dispatchEvent(new Event('input', {bubbles:true})); el.classList.remove('demo-target'); },
+  async until(done) { for (let n = 0; n < 600 && !done(); n++) await wait(100 * DEMO_SPEED); }};
+ try { for (let i = 0; i < DEMO.length; i++) { go(i + 1); demoBar(i); await DEMO[i].run(d); } demo.done = true; } catch (stopped) { if (stopped !== 'stopped') throw stopped; return; }
+ demo.playing = false; demoBar();
+}
 // The narrative page links to a step with #step-N.
 const linked = location.hash.match(/^#step-(\d+)$/); if (linked) S.step = Math.min(STEPS.length, Math.max(1, +linked[1]));
 render();
+if (new URLSearchParams(location.search).has('demo')) startDemo(); // share link: ?demo starts the runthrough

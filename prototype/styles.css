@@ -72,3 +72,6 @@ button.card h3::after{content:' ↗';color:var(--blue);font-size:12px}
 dialog{width:min(760px,92vw);max-height:86vh;border:1px solid var(--line);border-radius:6px;padding:22px 24px;color:var(--ink)}
 dialog::backdrop{background:#0007}
 dialog h2{font-size:22px}dialog #detail-body{margin-top:14px;font-size:13px}
+#demo-bar{position:sticky;top:0;z-index:5;display:grid;grid-template-columns:1fr auto;gap:4px 16px;align-items:center;background:var(--pale);border-bottom:1px solid #adcdf3;padding:10px 28px;font-size:13px;color:var(--blue)}
+#demo-bar[hidden]{display:none}#demo-bar .track{grid-column:1/-1;height:4px}#demo-fill{transition:width .4s}
+.demo-target{outline:3px solid var(--bright)!important;outline-offset:3px;box-shadow:0 0 0 8px #317eff33;transition:box-shadow .2s}
