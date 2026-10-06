@@ -151,4 +151,17 @@ function expertScore(pod,trained){
  const rows=SEATS[pod].rubric;
  return scoreRubric(rows,rows.map((r,i)=>(trained?!TRAINED[pod].fails.includes(i):r.pass)?'pass':'fail'));
 }
-if(typeof module!=='undefined') module.exports={SEATS,TASKS,DEPARTMENTS,EXTRA_FILES,TRAINED,validateSubmission,scoreRubric,expertScore};
+/* The task everyone does today. Placeholder: the Cash & banking fixture stands in until the team picks a real L1 from the pilot set. */
+const TODAY = 'A';
+const L3 = {name:'Prepare Cirrus Sleep for its first external audit', role:'Controller', hours:'~100 hours'};
+const L1S = {A:[{name:'Reconcile June cash: bank statement against the books', today:true}, {name:'Age the open receivables at month end'}, {name:'Log payment exceptions with an owner for each'}]};
+/* Step 10 kicker: the parent L2 task contains the same judgment. Placeholder checks and anonymous model results until Jeff supplies real per-criterion results. */
+const L2GAP = {name:'Board model inputs: operations cost and AP', hours:'10–20 hours', models:['Model A', 'Model B', 'Model C', 'Model D'],
+ checks:[
+  {text:'Keeps full-year fulfillment cost net of the $12,000 Apex credit in every schedule', points:15, mustPass:true, models:[false, false, true, false], trained:true},
+  {text:'Cites only source tabs that exist, across every schedule', points:15, mustPass:true, models:[false, true, false, false], trained:true},
+  {text:'Holds the ~$45,000 lost sales as a memo, never booked as revenue or cost', points:10, mustPass:false, models:[false, false, false, false], trained:true},
+  {text:'Ties ending accounts payable to $58,844 with a $0 variance', points:10, mustPass:false, models:[true, false, false, false], trained:false}],
+ before:'FY2021 board model inputs. Fulfillment and shipping: $184,000 for the year (Apex credit applied separately in the AP schedule). Sources: P&L Monthly, Operations Fulfillment tab. Apex incident: $45,000 lost revenue recorded against Q3. Ending AP: $58,844.',
+ after:'FY2021 board model inputs. Fulfillment and shipping: $172,000 for the year, net of the $12,000 Apex credit booked in September (IS_Monthly, PnL_Quarterly, Apex_Crisis). Apex incident: ~$45,000 lost sales held as a memo, not booked. Ending AP: $58,844; reconciliation variance still being traced.'};
+if(typeof module!=='undefined') module.exports={L2GAP,TODAY,L3,L1S,SEATS,TASKS,DEPARTMENTS,EXTRA_FILES,TRAINED,validateSubmission,scoreRubric,expertScore};

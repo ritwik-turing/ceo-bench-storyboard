@@ -1,167 +1,211 @@
 'use strict';
-/* CEO Bench live demo prototype. Agent runs, training, and scores are simulated from authored fixtures in data.js. No model is called. */
+/* CEO Bench live demo prototype v3. Company data comes from the real corpus (corpus.js). Today's task, its rubric,
+   and the three model results are the real L1-04-01 pilot records (l1.js). The L2 gap, training, and re-evaluation
+   are placeholders (L2GAP in data.js). No model is called live. */
 const $ = s => document.querySelector(s);
 const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const KEY = 'ceo-bench-demo-v2';
-const PODS = Object.keys(SEATS);
-const blank = () => ({step:1, pod:'A', dept:0, file:null, revealed:false, names:{}, work:{}, baseline:{}, marks:{}, trained:false, trainedRun:{}, reeval:false});
+const KEY = 'ceo-bench-demo-v3', NOTES_KEY = 'ceo-bench-comments-v3';
+const T = TASK;
+const blank = () => ({step:1, model:1, src:'d2', file:0, revealed:false, openL2:false, gap:false, work:null, baseline:false, graded:false, trained:false, trainedRun:false});
 let S = blank();
 try { S = Object.assign(blank(), JSON.parse(localStorage.getItem(KEY))); } catch {}
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch {} };
-let runId = 0; // cancels a running replay or training animation when the view changes
+let runId = 0; // cancels a running replay, grading, or training animation when the view changes
 
-const work = pod => S.work[pod] ??= {deliverable:'', rubric:Array.from({length:10}, () => ({text:'', points:'', mustPass:false})), submitted:false, example:false};
-const podName = pod => S.names[pod]?.trim() ? `Pod ${pod} · ${esc(S.names[pod])}` : `Pod ${pod}`;
+const work = () => S.work ??= {deliverable:'', rubric:Array.from({length:10}, () => ({text:'', points:'', mustPass:false})), submitted:false, example:false};
 const points = rows => rows.reduce((n, r) => n + (Number(r.points) || 0), 0);
-// The rubric a pod grades with: its own once submitted, otherwise the expert fixture.
-const gradingRubric = pod => work(pod).submitted ? {rows:work(pod).rubric, own:!work(pod).example} : {rows:SEATS[pod].rubric, own:false};
-const podTabs = () => `<div class="pods" role="tablist">${PODS.map(p => `<button data-pod="${p}" class="${S.pod===p?'on':''}" aria-pressed="${S.pod===p}">${podName(p)} · ${SEATS[p].name}</button>`).join('')}</div>`;
-const simTag = text => `<div class="sim">Simulated · ${text} No model is called.</div>`;
-const scoreLine = sc => `${sc.percent}/100 ${sc.gated ? '<span class="tag bad">Fails a must-pass</span>' : '<span class="tag good">All must-pass gates cleared</span>'}`;
-const packet = pod => SEATS[pod].files.map(f => `<span class="label">${f.ref} · ${esc(f.name)} · rehearsal fixture</span><pre>${esc(f.body)}</pre>`).join('<br>');
+const fmt = n => n.toLocaleString('en-US');
+const M = () => T.models[S.model] || T.models[0];
+const sim = text => `<div class="sim">${text}</div>`;
+const real = text => `<div class="sim real">${text}</div>`;
+const mark = ok => `<span class="mark ${ok ? 'y' : 'n'}" aria-label="${ok ? 'Met' : 'Not met'}">${ok ? '✓' : '✕'}</span>`;
+const pts = (m, i) => { const r = T.rubric[i], got = m.scores[i]; return `<span class="${got === r.points ? 'good' : got === 0 ? 'bad' : ''}">${got}/${r.points}</span>`; };
+const ring = (value, fail) => { const c = 2 * Math.PI * 30; return `<div class="ring ${fail ? 'fail' : ''}"><svg viewBox="0 0 76 76"><circle class="bg" cx="38" cy="38" r="30"/><circle class="fg" cx="38" cy="38" r="30" stroke-dasharray="${(value / 100 * c).toFixed(1)} ${c.toFixed(1)}"/></svg><span>${value}</span></div>`; };
+const verdict = m => m.pass ? '<span class="tag good">Passes</span>' : `<span class="tag bad">Disqualified · ${m.failed.join(', ')}</span>`;
+const KIND = {xlsx:'spreadsheets', docx:'documents', doc:'documents', pdf:'PDFs', pptx:'slide decks', csv:'data exports', json:'data exports', png:'images'};
+const kinds = k => Object.entries(Object.entries(k).reduce((a, [x, n]) => (a[KIND[x] || 'other files'] = (a[KIND[x] || 'other files'] || 0) + n, a), {})).map(([x, n]) => `${n} ${x}`).join(' · ');
+const gapScore = met => { const total = L2GAP.checks.reduce((n, c) => n + c.points, 0), earned = L2GAP.checks.reduce((n, c) => n + (met(c) ? c.points : 0), 0); return {total, earned, pct:Math.round(earned / total * 100)}; };
+const screen = (title, body) => `<div class="screen"><div class="chrome"><i></i><i></i><i></i><b>${title}</b><span class="rec">Recorded run · replay</span></div><div class="screen-body">${body}</div></div>`;
 
 const views = {
- 1: () => `<div class="grid g2" style="align-items:center"><div><button class="card" data-detail="stat:" title="See the departments behind the files"><div class="stat">1,100+</div></button><p class="sub">Files in the company dataset, covering 1 complete fiscal year</p></div><div class="grid g2">${DATA_TYPES.map((x, i) => `<button class="card" data-detail="type:${i}" title="${esc(x.blurb)}"><h3>${x.title}</h3><p>${x.examples.join(' · ')}</p></button>`).join('')}</div></div><p class="sub" style="margin-top:16px">Select a data type to see what it contains.</p>`,
+ // 1 · Company and its data
+ 1: () => { const sys = Object.fromEntries(CORPUS.systems.map(s => [s.name, s.count]));
+  const tiles = [[CORPUS.totalFiles, 'files, 1 fiscal year'], [CORPUS.people, 'employees'], [sys['Slack'], 'Slack messages'], [sys['Support tickets'], 'support tickets'], [sys['Online orders'], 'online orders'], [sys['Bank and ledger'], 'ledger lines']];
+  const sources = [...CORPUS.departments.map((d, i) => ({key:'d' + i, name:d.name, meta:`${d.files}`, d})), ...CORPUS.systems.map((s, i) => ({key:'s' + i, name:s.name, meta:fmt(s.count), s}))];
+  const cur = sources.find(x => x.key === S.src) || sources[0];
+  let pane;
+  if (cur.d) { const f = cur.d.samples[S.file] || cur.d.samples[0], data = /\.xlsx$/.test(f?.name || '');
+   pane = `<p class="small">${cur.d.files} files · ${kinds(cur.d.kinds)}</p><div class="chips">${cur.d.samples.map((x, i) => `<button data-file="${i}" class="${x === f ? 'on' : ''}">${esc(x.name)}</button>`).join('')}</div>${f ? `<span class="path">${esc(f.path)}</span><div class="doc ${data ? 'data' : ''}">${esc(f.text)}</div>` : ''}`; }
+  else pane = `<p class="small">${esc(cur.s.detail)}</p><span class="path">${esc(cur.s.sampleTitle)} · as stored</span><div class="doc data">${esc(cur.s.sample)}</div>`;
+  return `<div class="strip">${tiles.map(([n, l], i) => `<div class="tile ${i ? '' : 'lead'}"><div class="num" data-count="${n}">${fmt(n)}</div><div class="cap">${l}</div></div>`).join('')}</div>
+  <div class="browser"><div class="side"><span class="label">${CORPUS.departments.length} departments</span>${sources.map(x => `${x.key === 's0' ? '<span class="label">Systems</span>' : ''}<button data-src="${x.key}" class="${x === cur ? 'on' : ''}">${esc(x.name)}<small>${x.meta}</small></button>`).join('')}</div>
+  <div class="pane"><h3>${esc(cur.name)}</h3>${pane}</div></div>`; },
 
- 2: () => { const d = DEPARTMENTS[S.dept]; const file = allFiles().find(f => f.name === S.file);
-  return `<div class="grid g2"><div class="tree">${DEPARTMENTS.map((x, i) => `<button data-dept="${i}" class="${i===S.dept?'on':''}">${i===S.dept?'▾':'▸'} ${x[0]}<br><small>${x[1]}</small></button>${i===S.dept ? `<div class="files">${x[3].map(f => `<button data-file="${esc(f)}">${esc(f)}</button>`).join('')}</div>` : ''}`).join('')}</div>
-  <div>${file ? `<span class="label">${file.ref} · ${esc(file.name)} · rehearsal fixture</span><pre>${esc(file.body)}</pre>` : `<div class="card"><h3>${d[0]}</h3><p>${S.file ? `“${esc(S.file)}” is not included in this prototype.` : 'Choose a file to open it.'}</p></div>`}</div></div>`; },
+ // 2 · L3 brief and the L3 → L2 → L1 breakdown
+ 2: () => `<div class="tier l3"><div class="lvl">L3<small>~100h</small></div><div class="card dark"><span class="label">The executive job · abridged</span><h3 style="font-size:22px">${L3.name}</h3><div class="brief">${MANDATE.map((m, i) => `<button data-detail="mandate:${i}" title="${esc(m.detail)}"><span class="k">${m.label.replace('Your ', '')}</span><span class="v">${m.value}</span></button>`).join('')}</div></div></div>
+  <div class="tier l2 ${S.openL2 ? '' : 'last'}"><div class="lvl">L2<small>10–20h</small></div>${S.revealed ? `<div class="grid g5 reveal">${TASKS.map(([n, name, desc, pod]) => `<button class="card ${pod === TODAY ? 'hot' : ''}" ${pod === TODAY ? 'data-act="open-l2"' : `data-detail="task:${n}"`}><span class="label">${pod === TODAY ? 'Contains your task' : 'Done by experts'}</span><h3>${pod === TODAY ? 'Board model inputs: operations cost and AP' : name}</h3><p>${pod === TODAY ? 'L2-04 · fulfillment, payables, and the Apex incident' : desc}</p></button>`).join('')}</div>` : `<div><button class="primary big" data-act="reveal">Break it into 10 department tasks</button></div>`}</div>
+  ${S.openL2 ? `<div class="tier l1 last"><div class="lvl">L1<small>1–3h</small></div><div class="grid g3 reveal">${T.siblings.map((t, i) => `<button class="card ${t.today ? 'today' : ''}" data-detail="l1:${i}"><span class="label">${t.id} · ${t.today ? 'Your task today' : 'Done by experts'}</span><h3>${t.name}</h3></button>`).join('')}</div></div>` : (S.revealed ? '<p class="small" style="margin-left:72px">Open the highlighted department task to see the small tasks inside it.</p>' : '')}`,
 
- 3: () => `<span class="label">Executive engagement · abridged · level 3</span><div class="grid g2" style="max-width:900px">${MANDATE.map((m, i) => `<button class="card" data-detail="mandate:${i}" title="${esc(m.detail)}"><span class="label">${m.label}</span><h3>${m.value}</h3></button>`).join('')}</div><p class="sub" style="margin-top:16px">Roughly 100 hours of professional work (task-design estimate).</p>`,
+ // 3 · Golden answer
+ 3: () => { const w = work();
+  return `<div class="work"><div class="stack"><div class="task-card"><span class="label">Your task · ${T.id}</span><p><b>${T.question}</b></p><p style="margin-top:6px">${T.brief}</p><p class="small" style="margin-top:8px">${T.briefNote}</p></div>
+   ${T.files.map(f => `<div class="source"><h4><span class="ref">${f.ref}</span>${esc(f.name)}</h4><pre class="wide">${esc(f.body)}</pre></div>`).join('')}</div>
+   <div class="stack"><div><span class="label">Your golden answer</span><textarea data-f="deliverable" placeholder="Quarter totals, with the source tab for each. Before or after the $12,000 credit? What can’t the records split?" aria-label="Your golden answer">${esc(w.deliverable)}</textarea></div><div class="row"><button data-act="example">Fill in the expert’s answer</button><span class="small">Loads the real golden answer and rubric, for a quick run-through.</span></div></div></div>`; },
 
- 4: () => S.revealed
-  ? `<div class="grid g5">${TASKS.map(([n, name, desc, pod]) => `<div class="card ${pod?'hot':''}"><span class="label">${n}${pod?` · Pod ${pod}`:''}</span><h3>${name}</h3><p>${desc}</p><button data-detail="task:${n}" style="margin-top:10px">View task</button>${pod ? `<input type="text" data-name="${pod}" placeholder="Pod ${pod} names" value="${esc(S.names[pod]||'')}" style="margin-top:10px">` : ''}</div>`).join('')}</div><p class="sub" style="margin-top:16px">Each task has its own prompt, reference answer, and rubric. 4 pods, 1 task each.</p>`
-  : `<button class="primary" data-act="reveal">Break the engagement into 10 tasks</button>`,
+ // 4 · Rubric and submit
+ 4: () => { const w = work(), total = points(w.rubric), errors = validateSubmission({name:'Pod', deliverable:w.deliverable, rubric:w.rubric});
+  return `<div class="table-card"><div class="scroll"><table class="rubric"><thead><tr><th>#</th><th>What a correct answer must do</th><th class="n">Points</th><th class="c">Must-pass</th><th></th></tr></thead><tbody>${w.rubric.map((r, i) => `<tr><td>${i + 1}</td><td><input type="text" data-r="${i}" data-k="text" value="${esc(r.text)}" placeholder="A checkable requirement" aria-label="Criterion ${i + 1}"></td><td class="n"><input type="number" min="1" max="100" data-r="${i}" data-k="points" value="${esc(r.points)}" aria-label="Points for criterion ${i + 1}"></td><td class="c"><input type="checkbox" data-r="${i}" data-k="mustPass" ${r.mustPass ? 'checked' : ''} aria-label="Must-pass"></td><td><button data-act="del" data-i="${i}" aria-label="Remove criterion ${i + 1}">×</button></td></tr>`).join('')}</tbody></table></div>
+  <div class="submitbar"><div class="row"><button data-act="add" ${w.rubric.length >= 20 ? 'disabled' : ''}>Add a criterion</button><button data-detail="help:criterion">What makes a good criterion?</button></div><div class="meter" id="sum">${meter(total)}</div></div>
+  <div class="submitbar" style="background:#fff">${errors.length ? `<ul class="errors">${errors.map(e => `<li>${e}</li>`).join('')}</ul>` : '<span class="good">Format checks pass: every line is filled in and the points total 100.</span>'}<div class="row">${w.submitted ? '<span class="tag good">Submitted · ready to test an AI</span><button data-detail="sub:">View</button>' : ''}<button class="primary" data-act="submit" ${errors.length ? 'disabled' : ''}>${w.submitted ? 'Submit again' : 'Submit task'}</button></div></div></div>`; },
 
- 5: () => `<div class="grid g4">${PODS.map(p => `<div class="card"><span class="label">${podName(p)}</span><h3>${SEATS[p].name}</h3><p><b>${SEATS[p].question}</b></p><p style="margin-top:8px">${SEATS[p].brief}</p><button data-detail="pod:${p}" style="margin-top:10px">Open the packet (${SEATS[p].files.length} files)</button></div>`).join('')}</div>`,
+ // 5 · Model eval and rubric grading
+ 5: () => { if (!S.baseline) return `${real('Recorded results from the pilot runs, July 2026 · the replay animates each saved answer')}<div id="stage" class="launch"><h3>Three AI models get the same prompt and files you had.</h3><p class="sub">Watch one of them work, then see how all three scored on your rubric.</p><button class="primary big" data-act="run-baseline">▶ Run the models</button></div>`;
+  const m = M();
+  return `${real('Recorded results from the pilot runs, July 2026 · no model is called live')}
+  <div class="models">${T.models.map((x, i) => `<button class="model ${i === S.model ? 'on' : ''} ${x.pass ? '' : 'fail'}" data-model="${i}">${ring(x.total, !x.pass)}<div><h3>${x.name}</h3>${verdict(x)}<p class="small" style="margin-top:6px">${x.pass ? `${x.total} of 100 points` : `Raw ${x.total}, but a must-pass check failed`}</p></div></button>`).join('')}</div>
+  <div class="callout blue" style="margin-bottom:20px"><b>Two of three pass this short task.</b> ChatGPT got every number right but cited a spreadsheet tab that does not exist, so must-pass check O3 disqualifies it.</div>
+  <div class="work"><div class="stack"><div><span class="label">Output · ${m.name}’s answer (first rows)</span><pre class="wide">${esc(m.answer)}</pre></div><button data-act="rerun-baseline" style="align-self:flex-start">Replay ${m.name}’s run</button></div>
+  <div class="table-card"><div class="scroll"><table id="grades"><thead><tr><th>Rubric check · ${m.name}</th><th class="n">Score</th></tr></thead><tbody>${T.rubric.map((r, i) => `<tr class="grade-row" data-row="${i}"><td><button class="linkish" data-detail="crit:${i}">${r.id} · ${esc(r.text)}</button> ${r.mustPass ? '<span class="tag bad">Must-pass</span>' : ''}</td><td class="n g">${S.graded ? pts(m, i) : '<span class="small">…</span>'}</td></tr>`).join('')}</tbody></table></div><div class="submitbar" id="grade-total">${S.graded ? gradeTotal() : '<button class="primary" data-act="grade">Grade with the rubric</button>'}</div></div></div>`; },
 
- 6: () => { const w = work(S.pod);
-  return `${podTabs()}<div class="grid g2"><div><span class="label">Assignment</span><p style="margin-bottom:14px">${SEATS[S.pod].brief}</p>${packet(S.pod)}</div><div><span class="label">Your deliverable (your reference answer)</span><textarea data-f="deliverable" placeholder="Finding → source reference. Uncertainty → next action.">${esc(w.deliverable)}</textarea><div class="row" style="margin-top:10px"><button data-act="example">Load a rehearsal example</button><small class="sub">Fills this pod with the authored example answer and rubric.</small></div></div></div>`; },
+ // 6 · The catch
+ 6: () => `${sim('Placeholder checks and anonymous results until the real L2-04 results are added')}
+  <div class="gap-head"><div class="card"><span class="label">L1 · your task</span><h3>${T.name}</h3><p>1–3 hours · ${T.models.map(m => `${m.name} ${m.pass ? m.total : 'disqualified'}`).join(' · ')}</p></div><div class="arrow">→</div><div class="card dark"><span class="label">L2 · the department task that contains it · ${L2GAP.hours}</span><h3>${L2GAP.name}</h3><p>All six small tasks combined, over a full year of records.</p></div></div>
+  ${S.gap ? `<div class="table-card reveal"><div class="scroll"><table><thead><tr><th>The same judgment, inside the L2 task</th><th class="n">Pts</th>${L2GAP.models.map(m => `<th class="c">${m}</th>`).join('')}</tr></thead><tbody>${L2GAP.checks.map(c => `<tr><td>${esc(c.text)} ${c.mustPass ? '<span class="tag bad">Must-pass</span>' : ''}</td><td class="n">${c.points}</td>${c.models.map(ok => `<td class="c">${mark(ok)}</td>`).join('')}</tr>`).join('')}</tbody></table></div></div><div class="callout" style="margin-top:18px">Every model lost points on the judgment you just made in about 40 minutes. <b>Short tasks are easy. Long, real work is where models break.</b></div>` : '<button class="primary big" data-act="gap">Show how models did inside the L2 task</button>'}`,
 
- 7: () => { const w = work(S.pod);
-  return `${podTabs()}<table class="rubric"><thead><tr><th>#</th><th>What a correct answer must do</th><th class="n">Points</th><th>Must-pass</th><th></th></tr></thead><tbody>${w.rubric.map((r, i) => `<tr><td>${i+1}</td><td><input type="text" data-r="${i}" data-k="text" value="${esc(r.text)}" placeholder="A checkable requirement"></td><td class="n"><input type="number" min="1" max="100" data-r="${i}" data-k="points" value="${esc(r.points)}"></td><td><input type="checkbox" data-r="${i}" data-k="mustPass" ${r.mustPass?'checked':''} aria-label="Must-pass"></td><td><button data-act="del" data-i="${i}" aria-label="Remove criterion ${i+1}">×</button></td></tr>`).join('')}</tbody></table>
-  <div class="row between" style="margin-top:12px"><button data-act="add" ${w.rubric.length>=20?'disabled':''}>Add a criterion</button><button data-detail="help:criterion">See what a good criterion looks like</button><span id="sum"></span></div>`; },
+ // 7 · Reinforcement learning
+ 7: () => `${sim('Recorded training curve · values are illustrative')}<div class="work"><div class="stack"><div class="card"><span class="label">Training data</span><h3>What the model learns from</h3><p style="margin-bottom:12px">Every attempt on the long task, graded check by check by the rubric.</p><div class="row">${[['traces', 'Graded attempts'], ['golden', 'Expert golden answers'], ['rubric', 'Rubrics as the reward']].map(([k, l]) => `<button data-detail="train:${k}">${l}</button>`).join('')}</div></div><button class="primary big" data-act="train" style="align-self:flex-start">${S.trained ? '↻ Replay training run' : '▶ Start training run'}</button></div>
+  <div class="curve-card"><div class="row between"><span class="label" style="margin:0">Score on the gap checks</span><span class="small" id="train-status">${S.trained ? 'Training complete · checkpoint saved' : 'Not started'}</span></div><svg class="curve" viewBox="0 0 100 100" preserveAspectRatio="none" aria-label="Score during training">${[25, 50, 75].map(y => `<line x1="0" x2="100" y1="${y}" y2="${y}"/>`).join('')}<polygon id="area" points="${S.trained ? area(curvePoints(60)) : ''}"/><polyline id="curve" points="${S.trained ? curvePoints(60) : ''}"/></svg><div class="row between small"><span>Start</span><span>Training steps →</span></div></div></div>`,
 
- 8: () => { const w = work(S.pod); const errors = validateSubmission({name:S.names[S.pod] || `Pod ${S.pod}`, deliverable:w.deliverable, rubric:w.rubric});
-  return `${podTabs()}<div class="grid g2"><div class="card"><h3>${SEATS[S.pod].name}</h3><p>Deliverable: ${w.deliverable.trim() ? w.deliverable.trim().split(/\s+/).length + ' words' : 'empty'} · Rubric: ${w.rubric.length} criteria, ${points(w.rubric)} points${w.example ? ' · rehearsal example' : ''}</p>${errors.length ? `<ul class="errors">${errors.map(e => `<li>${e}</li>`).join('')}</ul>` : '<p class="good" style="margin-top:10px">Structure checks pass. An expert still reviews the evidence.</p>'}<button class="primary" data-act="submit" ${errors.length?'disabled':''} style="margin-top:12px">${w.submitted?'Resubmit':'Send to review'}</button></div>
-  <div class="card"><span class="label">Review inbox</span>${PODS.map(p => `<div class="row between" style="padding:8px 0;border-bottom:1px solid var(--line)"><button data-detail="sub:${p}" title="Open this pod’s submission">${podName(p)} · ${SEATS[p].name}</button>${work(p).submitted ? '<span class="tag good">Received</span>' : '<span class="tag">In progress</span>'}</div>`).join('')}</div></div>`; },
+ // 8 · After training: trained run and re-evaluation
+ 8: () => { if (!S.trained) return `<div class="launch"><h3>Train the model first.</h3><button data-go="7" class="primary">Go to training</button></div>`;
+  const a = gapScore(c => c.models[0]), b = gapScore(c => c.trained);
+  return `${sim('Pre-built checkpoint, recorded replay, illustrative scores')}<div class="work"><div class="stack"><div><span class="label">Model A on the L2 task · before training</span><pre>${esc(L2GAP.before)}</pre></div>${S.trainedRun ? `<div><span class="label">Model A on the L2 task · after training</span><pre>${esc(L2GAP.after)}</pre></div><button data-act="rerun-trained" style="align-self:flex-start">Replay the trained run</button>` : '<div id="stage" class="launch"><h3>Same agent, after training, on the long task.</h3><button class="primary big" data-act="run-trained">▶ Run the trained agent</button></div>'}</div>
+  ${S.trainedRun ? `<div class="stack"><div class="card hot"><span class="label">Gap checks · Model A</span><div class="big-stat">${b.earned}<small>/${b.total}</small></div><p style="margin-top:6px">Up from ${a.earned} before training.</p><div class="bars" style="margin-top:16px"><div class="bar"><span>Before</span><div class="track"><span class="before" style="width:${a.pct}%"></span></div><span>${a.earned}/${a.total}</span></div><div class="bar"><span>After</span><div class="track"><span class="after" style="width:${b.pct}%"></span></div><span>${b.earned}/${b.total}</span></div></div></div>
+   <div class="table-card"><table><thead><tr><th>Check</th><th class="c">Before</th><th class="c">After</th></tr></thead><tbody>${L2GAP.checks.map(c => `<tr><td>${esc(c.text)}</td><td class="c">${mark(c.models[0])}</td><td class="c">${mark(c.trained)}</td></tr>`).join('')}</tbody></table></div></div>` : '<div></div>'}</div>`; },
 
- 9: () => { const done = S.baseline[S.pod], sc = expertScore(S.pod, false), seat = SEATS[S.pod];
-  return `${simTag('Recorded replay and a pre-computed evaluation.')}${podTabs()}${done
-   ? `<div class="grid g2"><div><span class="label">Baseline agent deliverable</span><pre>${esc(seat.attempt)}</pre></div><div class="card"><span class="label">Pre-run evaluation · expert rubric</span><div class="stat">${sc.percent}<small>/100</small></div><p style="margin:8px 0">${sc.gated?'<span class="tag bad">Fails a must-pass</span>':''}</p><p><b>Biggest misses</b></p><ul style="font-size:12px;padding-left:18px">${seat.rubric.map((r, i) => !r.pass && r.mustPass ? `<li><button data-detail="crit:${i}" style="margin-bottom:6px;text-align:left">${esc(r.text)}</button></li>` : '').filter(Boolean).slice(0,2).join('')}</ul><button data-detail="score:" style="margin-top:6px">See every criterion</button><button data-act="rerun-baseline" style="margin-top:10px">Replay</button></div></div>`
-   : `<div id="stage"><p class="sub">Open-weights agent, before any specialized training. Same prompt and files as ${podName(S.pod)}.</p><button class="primary" data-act="run-baseline">▶ Run baseline</button></div>`}`; },
-
- 10: () => { const {rows, own} = gradingRubric(S.pod), marks = S.marks[S.pod] ??= [];
-  const earned = rows.reduce((n, r, i) => n + (marks[i]==='pass' ? Number(r.points) : 0), 0), open = rows.filter((_, i) => !['pass','fail'].includes(marks[i])).length, gated = rows.some((r, i) => r.mustPass && marks[i]==='fail');
-  return `${podTabs()}<p class="sub">${own ? 'Grading with this pod’s own rubric.' : 'This pod has not submitted its own rubric, so the expert rubric is shown.'} Read the criterion, find the evidence in the agent’s deliverable, and mark it.</p>
-  <div class="grid g2"><div><span class="label">Baseline agent deliverable</span><pre>${esc(SEATS[S.pod].attempt)}</pre><br>${packet(S.pod)}</div><div><table><thead><tr><th>Criterion</th><th class="n">Pts</th><th>Your judgment</th></tr></thead><tbody>${rows.map((r, i) => `<tr><td>${esc(r.text)} ${r.mustPass?'<span class="tag bad">Must-pass</span>':''}${!own && marks[i] ? `<br><small class="sub">Expert note: ${esc(r.reason)}</small>` : ''}</td><td class="n">${esc(r.points)}</td><td><div class="mark">${[['pass','Met'],['fail','Not met'],['unclear','Unclear']].map(([v, l]) => `<button data-mark="${i}" data-v="${v}" class="${marks[i]===v?'on':''}" aria-pressed="${marks[i]===v}">${l}</button>`).join('')}</div></td></tr>`).join('')}</tbody></table>
-  <div class="total"><b>Your score: ${earned}/100</b>${gated ? ' · <span class="bad">must-pass failed, attempt fails</span>' : ''}${open ? ` · ${open} not scored yet` : ' · review complete'}<br><small>Expert rubric score from step 9: ${expertScore(S.pod, false).percent}/100</small></div></div></div>`; },
-
- 11: () => `${simTag('Pre-built dataset and a recorded training curve; values are illustrative.')}<div class="grid g2"><div class="card"><span class="label">Training dataset</span><h3>Expert data for 4 tasks</h3><div class="row">${[['golden','Reference answers'],['rubric','Rubrics, used as the reward'],['variants','Expert-built task variants']].map(([k, l]) => `<button data-detail="train:${k}">${l}</button>`).join('')}</div><p style="margin-top:10px"><b>Held out:</b> the 4 pod tasks themselves. They are used only for evaluation.</p><button class="primary" data-act="train" style="margin-top:14px">${S.trained?'Replay training run':'▶ Start training run'}</button></div><div><span class="label">Average rubric reward during training</span><svg class="curve" viewBox="0 0 100 100" preserveAspectRatio="none" aria-label="Reward curve"><polyline id="curve" points="${S.trained ? curvePoints(60) : ''}"/></svg><div class="row between"><small class="sub">Training steps →</small><small id="train-status">${S.trained ? 'Training complete. Checkpoint saved.' : 'Not started'}</small></div></div></div>`,
-
- 12: () => { if (!S.trained) return needTraining(); const done = S.trainedRun[S.pod];
-  return `${simTag('Pre-built checkpoint and a recorded replay.')}${podTabs()}<div class="grid g2"><div><span class="label">Baseline agent</span><pre>${esc(SEATS[S.pod].attempt)}</pre></div><div>${done ? `<span class="label">Trained checkpoint</span><pre>${esc(TRAINED[S.pod].attempt)}</pre><div class="row" style="margin-top:10px"><button data-act="rerun-trained">Replay</button><button data-detail="diff:">See what it did differently</button></div>` : `<div id="stage"><p class="sub">Same agent after training. Same prompt, same files.</p><button class="primary" data-act="run-trained">▶ Run trained agent</button></div>`}</div></div>`; },
-
- 13: () => { if (!S.trained) return needTraining(); const rows = SEATS[S.pod].rubric, a = expertScore(S.pod, false), b = expertScore(S.pod, true); 
-  return `${simTag('Pre-computed evaluations of authored fixtures; scores are illustrative.')}${S.reeval
-   ? `${podTabs()}<div class="grid g2"><div><table><thead><tr><th>Criterion · expert rubric</th><th class="n">Pts</th><th>Before</th><th>After</th></tr></thead><tbody>${rows.map((r, i) => `<tr><td><button data-detail="crit:${i}" style="text-align:left" title="See the evidence">${esc(r.text)}</button> ${r.mustPass?'<span class="tag bad">Must-pass</span>':''}</td><td class="n">${r.points}</td><td>${tick(r.pass)}</td><td>${tick(!TRAINED[S.pod].fails.includes(i))}</td></tr>`).join('')}</tbody></table></div>
-     <div><div class="card hot"><span class="label">${podName(S.pod)} · ${SEATS[S.pod].name}</span><div class="stat">+${b.percent - a.percent}<small> points</small></div><p style="margin-top:8px">Before: ${scoreLine(a)}<br>After: ${scoreLine(b)}</p></div><div class="bars" style="margin-top:20px">${podBars()}</div></div></div>`
-   : `<button class="primary" data-act="reeval">Re-evaluate with the same rubric</button>`}`; },
-
- 14: () => `<p class="big">${esc(STEPS[13].say)}</p><div class="loop">${[[6,'Create a task'],[9,'Evaluate'],[11,'Train'],[13,'Re-evaluate']].map(([n, l]) => `<button data-go="${n}" title="Go to step ${n}">${l}</button>`).join('<i>→</i>')}</div>${S.trained ? `<div class="bars" style="max-width:760px">${podBars()}</div><small class="sub">Simulated scores from authored fixtures.</small>` : ''}`
+ // 9 · Recap
+ 9: () => `<p class="big">${esc(STEPS[8].say)}</p><div class="loop">${[[3, 'Create a task', 'You wrote the golden answer and rubric'], [5, 'Evaluate', 'Two of three models passed'], [6, 'Find the gap', 'Long tasks break them'], [7, 'Train', 'Learn from graded attempts'], [8, 'Evaluate again', 'The gap closes']].map(([n, l, d], i) => `<button data-go="${n}"><small>${i + 1} · ${l}</small>${d}</button>`).join('')}</div>`
 };
 
-const allFiles = () => [...PODS.flatMap(p => SEATS[p].files), ...EXTRA_FILES];
-const tick = ok => ok ? '<span class="good">✓ Met</span>' : '<span class="bad">✕ Not met</span>';
-const fileButtons = names => names.length ? `<div class="row" style="margin-top:12px">${names.map(n => `<button data-detail="file:${esc(n)}">${esc(n)}</button>`).join('')}</div>` : '<p class="sub" style="margin-top:12px">No sample file for this type in the prototype.</p>';
-const rubricTable = rows => `<table><tbody>${rows.map(r => `<tr><td>${esc(r.text)} ${r.mustPass?'<span class="tag bad">Must-pass</span>':''}</td><td class="n">${r.points}</td></tr>`).join('')}</tbody></table>`;
-// Detail panel content for clickable mocks. key is "kind:id".
+const meter = total => `<span>${total} of 100 points</span><div class="track"><span class="${total === 100 ? 'after' : 'before'}" style="width:${Math.min(100, total)}%;animation:none"></span></div><b class="${total === 100 ? 'good' : 'bad'}">${total === 100 ? 'Ready' : `${100 - total > 0 ? 100 - total + ' to go' : total - 100 + ' over'}`}</b>`;
+const gradeTotal = () => { const m = M(); return `<b>${m.name}: ${m.total}/100</b><span>${m.pass ? '<span class="good">Every must-pass check met, so the attempt passes.</span>' : `<span class="bad">Must-pass ${m.failed.join(', ')} failed, so the attempt is disqualified.</span>`}</span>`; };
+const rubricTable = rows => `<table><tbody>${rows.map(r => `<tr><td>${esc(r.text)} ${r.mustPass ? '<span class="tag bad">Must-pass</span>' : ''}</td><td class="n">${r.points}</td></tr>`).join('')}</tbody></table>`;
+// Detail panel content for clickable items. key is "kind:id".
 function detail(key) {
- const [kind, id] = [key.slice(0, key.indexOf(':')), key.slice(key.indexOf(':') + 1)];
- if (kind === 'type') { const t = DATA_TYPES[+id]; return [t.title, `<p>${esc(t.blurb)}</p><p style="margin-top:10px"><b>Includes:</b> ${t.examples.join(', ')}</p>${fileButtons(t.files)}`]; }
- if (kind === 'file') { const f = allFiles().find(f => f.name === id); return [`${f.ref ? f.ref + ' · ' : ''}${f.name}`, `<span class="label">${f.kind} · rehearsal fixture</span><pre>${esc(f.body)}</pre>`]; }
- if (kind === 'pod') { const s = SEATS[id]; return [`Pod ${id} · ${s.name}`, `<p><b>${s.question}</b></p><p style="margin:8px 0 14px">${s.brief}</p>${packet(id)}`]; }
- if (kind === 'task') { const [n, name, desc, pod] = TASKS.find(t => t[0] === id); return [`Task ${n} · ${name}`, `<p>${desc}</p><p style="margin-top:10px">A standalone 10–20 hour professional task with its own prompt, reference answer, and rubric.</p>${pod ? `<p style="margin-top:10px"><b>Pod ${pod} exercise:</b> ${SEATS[pod].brief}</p>${fileButtons(SEATS[pod].files.map(f => f.name))}` : '<p class="sub" style="margin-top:10px">Not assigned to a pod today.</p>'}`]; }
- if (kind === 'stat') return ['1,100+ files across 8 departments', DEPARTMENTS.map(([name, desc, , files]) => `<p style="margin-top:12px"><b>${name}</b> · ${desc}</p>${fileButtons(files)}`).join('')];
+ const [kind, id] = [key.slice(0, key.indexOf(':')), key.slice(key.indexOf(':') + 1)], w = work();
  if (kind === 'mandate') { const m = MANDATE[+id]; return [`${m.label}: ${m.value}`, `<p>${esc(m.detail)}</p>`]; }
  if (kind === 'help') return HELP[id];
- if (kind === 'sub') { const w = work(id); return [`Pod ${id} · ${SEATS[id].name}`, w.submitted ? `<span class="label">Deliverable${w.example ? ' · rehearsal example' : ''}</span><pre>${esc(w.deliverable)}</pre><br><span class="label">Rubric · ${w.rubric.length} criteria</span>${rubricTable(w.rubric)}` : '<p>This pod has not submitted yet.</p>']; }
- if (kind === 'crit') { const r = SEATS[S.pod].rubric[+id], after = !TRAINED[S.pod].fails.includes(+id); return [r.text, `<p>${r.points} points${r.mustPass ? ' · <span class="tag bad">Must-pass</span>' : ''}</p><p style="margin-top:10px"><b>Evidence in the packet:</b> ${esc(r.evidence)}</p><p style="margin-top:10px"><b>Baseline agent:</b> ${tick(r.pass)}. ${esc(r.reason)}</p>${S.trained ? `<p style="margin-top:10px"><b>Trained agent:</b> ${tick(after)}</p>` : ''}`]; }
- if (kind === 'score') return [`Baseline evaluation · Pod ${S.pod}`, `<table><tbody>${SEATS[S.pod].rubric.map((r, i) => `<tr><td><button data-detail="crit:${i}" style="text-align:left">${esc(r.text)}</button> ${r.mustPass?'<span class="tag bad">Must-pass</span>':''}</td><td class="n">${r.points}</td><td>${tick(r.pass)}</td></tr>`).join('')}</tbody></table>`];
- if (kind === 'diff') { const rows = SEATS[S.pod].rubric; return [`What the trained agent did differently · Pod ${S.pod}`, `<p style="margin-bottom:10px">Criteria the baseline missed and the trained agent now meets:</p><ul style="padding-left:18px">${rows.map((r, i) => !r.pass && !TRAINED[S.pod].fails.includes(i) ? `<li>${esc(r.text)}${r.mustPass ? ' <span class="tag bad">Must-pass</span>' : ''}</li>` : '').join('')}</ul><p style="margin:12px 0 6px">Still missed:</p><ul style="padding-left:18px">${TRAINED[S.pod].fails.map(i => `<li>${esc(rows[i].text)}</li>`).join('')}</ul>`]; }
- const s = SEATS[S.pod], w = work(S.pod);
- if (id === 'golden') return [`Reference answer · Pod ${S.pod}`, `<span class="label">${w.submitted && !w.example ? 'Submitted by this pod' : 'Expert example · rehearsal fixture'}</span><pre>${esc(w.submitted ? w.deliverable : s.golden)}</pre>`];
- if (id === 'rubric') return [`Rubric as reward · Pod ${S.pod}`, `<p style="margin-bottom:10px">Each training attempt is graded with this rubric. The points earned are the reward.</p>${rubricTable(gradingRubric(S.pod).rows)}`];
- return ['Expert-built task variants', '<p>Experts write new versions of the same task from other parts of the company’s year: a different month, different documents, a different planted conflict. The agent trains on these, never on the pod’s own task.</p><p class="sub" style="margin-top:10px">Illustrative. No variant set is included in this prototype.</p>'];
+ if (kind === 'task') { const [n, name, desc] = TASKS.find(t => t[0] === id); return [`L2 task · ${name}`, `<p>${desc}</p><p style="margin-top:10px">A standalone 10–20 hour department task with its own prompt, golden answer, and rubric. Experts have already completed it.</p>`]; }
+ if (kind === 'l1') { const t = T.siblings[+id]; return [`${t.id} · ${t.name}`, t.today ? `<p><b>Your task today.</b> ${T.brief}</p>` : '<p>A 1–3 hour itemized task inside L2-04, with its own prompt, golden answer, rubric, and three recorded model runs. Experts have already completed it.</p>']; }
+ if (kind === 'sub') return [`Submitted task · ${T.name}`, `<span class="label">Golden answer${w.example ? ' · expert’s answer' : ''}</span><pre class="wide">${esc(w.deliverable)}</pre><br><span class="label">Rubric · ${w.rubric.length} criteria</span>${rubricTable(w.rubric)}`];
+ if (kind === 'crit') { const r = T.rubric[+id]; return [`${r.id} · ${r.text}`, `<p>${r.points} points${r.mustPass ? ' · <span class="tag bad">Must-pass</span>' : ''}</p><p style="margin-top:10px"><b>Expected:</b> ${esc(r.expected)}</p><table style="margin-top:12px"><tbody>${T.models.map(m => `<tr><td>${m.name}</td><td class="n">${pts(m, +id)}</td></tr>`).join('')}</tbody></table>${r.note ? `<p class="small" style="margin-top:10px">Grader’s note: ${esc(r.note)}</p>` : ''}`]; }
+ if (id === 'traces') return ['Graded attempts', '<p>Each time the agent tries the department-level task, the rubric grades its answer check by check. The prompt, the answer, and those grades form one training example. Reinforcement learning uses thousands of them, with no human grading in the loop.</p>'];
+ if (id === 'golden') return ['Expert golden answers', `<p style="margin-bottom:10px">Every task carries an expert’s correct answer. Yours is one of them:</p><pre class="wide">${esc(w.deliverable || T.golden)}</pre>`];
+ return ['Rubrics, used as the reward', `<p style="margin-bottom:10px">Each attempt is graded with a rubric like this one. The points earned are the reward the model learns to maximize.</p>${rubricTable(w.submitted ? w.rubric : T.rubric)}`];
 }
-const needTraining = () => `<div class="card"><p>Run the training step first.</p><button data-go="11" style="margin-top:10px">Go to step 11</button></div>`;
-const podBars = () => PODS.map(p => { const a = expertScore(p, false).percent, b = expertScore(p, true).percent; return `<div class="bar"><button data-podgo="${p}" title="Open this pod’s before and after">${podName(p)}</button><div class="track"><span class="after" style="width:${b}%"></span><span class="before" style="width:${a}%"></span></div><span>${a} → ${b}</span></div>`; }).join('');
 
-// Illustrative reward curve from the average baseline score to the average trained score.
+// Illustrative score curve from the before score to the after score on the gap checks.
 function curvePoints(n) {
- const avg = t => PODS.reduce((s, p) => s + expertScore(p, t).percent, 0) / PODS.length, lo = avg(false), hi = avg(true);
- return Array.from({length:n}, (_, i) => { const t = i / 59, y = lo + (hi - lo) * (1 - Math.exp(-4 * t)) / (1 - Math.exp(-4)) + Math.sin(i * 1.7) * 1.5 * (1 - t); return `${(t * 100).toFixed(1)},${(100 - y).toFixed(1)}`; }).join(' ');
+ const lo = gapScore(c => c.models[0]).pct, hi = gapScore(c => c.trained).pct;
+ return Array.from({length:n}, (_, i) => { const t = i / 59, y = lo + (hi - lo) * (1 - Math.exp(-4 * t)) / (1 - Math.exp(-4)) + Math.sin(i * 1.7) * 3 * (1 - t); return `${(t * 100).toFixed(1)},${(100 - y).toFixed(1)}`; }).join(' ');
 }
+const area = pts => pts ? `${pts} ${pts.split(' ').pop().split(',')[0]},100 0,100` : '';
 function train() {
  const id = ++runId; let n = 0; S.trained = false;
- (function tick() { if (id !== runId || !$('#curve')) return; n += 1; $('#curve').setAttribute('points', curvePoints(n)); $('#train-status').textContent = `Training step ${n * 50} of 3,000`;
-  if (n < 60) return setTimeout(tick, 150); S.trained = true; S.reeval = false; save(); render(); })();
+ (function step() { if (id !== runId || !$('#curve')) return; n += 1; const p = curvePoints(n); $('#curve').setAttribute('points', p); $('#area').setAttribute('points', area(p)); $('#train-status').textContent = `Training step ${fmt(n * 50)} of 3,000`;
+  if (n < 60) return setTimeout(step, 150); S.trained = true; S.trainedRun = false; save(); render(); })();
 }
-function replay(pod, trained) {
- const id = ++runId, seat = SEATS[pod], text = trained ? TRAINED[pod].attempt : seat.attempt;
- const acts = [{label:`Read the task: ${seat.question}`}, ...seat.files.map(f => ({label:`Open ${f.ref} · ${f.name}`, doc:f.body})), ...(trained ? [{label:'Compare the records line by line'}, {label:'Check each document’s status'}, {label:'List what the packet does not establish'}] : [{label:'Skim the totals'}]), {label:'Write the deliverable'}];
- $('#stage').innerHTML = `<div class="screen"><span class="rec">● Recorded computer use · ${trained ? 'trained checkpoint' : 'baseline agent'} · simulated replay</span><div><ol id="log"></ol><pre class="doc" id="doc" hidden></pre></div><pre id="out"></pre></div>`;
+// Fills in the score column one check at a time.
+function grade() {
+ const id = ++runId; let i = 0; $('#grade-total').innerHTML = '<span class="small">Grading…</span>';
+ (function step() { if (id !== runId || !$('#grades')) return;
+  if (i < T.rubric.length) { const row = $(`#grades [data-row="${i}"]`); row.querySelector('.g').innerHTML = pts(M(), i); row.classList.add('flash'); i++; return setTimeout(step, 380); }
+  S.graded = true; save(); $('#grade-total').innerHTML = gradeTotal(); })();
+}
+function replay(trained) {
+ const id = ++runId, text = trained ? L2GAP.after : M().answer;
+ const acts = trained ? [{label:`Read the department task: ${L2GAP.name}, full year`}, {label:'Open 12 months of records'}, {label:'Open the source tabs', doc:T.files[0].body}, {label:'Match each month and quarter'}, {label:'Carry open items forward'}, {label:'Write the year-end schedule'}]
+  : [{label:`Read the task: ${T.question}`}, ...T.files.map(f => ({label:`Open ${f.ref} · ${f.name}`, doc:f.body})), {label:'Decide: before or after the $12,000 credit?'}, {label:'Write the Fulfillment_Shipping_by_Q tab'}];
+ $('#stage').outerHTML = `<div id="stage">${screen(trained ? 'Trained agent · L2-04' : `${M().name} · ${T.id}`, `<div><span class="label">Input</span><ol id="log"></ol><pre class="peek" id="doc" hidden></pre></div><div><span class="label">Output · the model’s answer</span><pre id="out" class="wide"></pre></div>`)}</div>`;
  let i = 0, n = 0;
  (function step() { if (id !== runId || !$('#log')) return;
-  if (i < acts.length) { const a = acts[i++]; $('#log').insertAdjacentHTML('beforeend', `<li>${esc(a.label)}</li>`); if (a.doc) { $('#doc').hidden = false; $('#doc').textContent = a.doc; } return setTimeout(step, 900); }
-  n += 3; $('#out').textContent = text.slice(0, n); if (n < text.length) return setTimeout(step, 20);
-  (trained ? S.trainedRun : S.baseline)[pod] = true; save(); setTimeout(() => id === runId && render(), 900); })();
+  if (i < acts.length) { const a = acts[i++]; $('#log').insertAdjacentHTML('beforeend', `<li>${esc(a.label)}</li>`); if (a.doc) { $('#doc').hidden = false; $('#doc').textContent = a.doc; } return setTimeout(step, 850); }
+  n += 4; $('#out').textContent = text.slice(0, n); if (n < text.length) return setTimeout(step, 18);
+  S[trained ? 'trainedRun' : 'baseline'] = true; save(); setTimeout(() => id === runId && render(), 900); })();
 }
-function updateSum() { const el = $('#sum'); if (!el) return; const w = work(S.pod), t = points(w.rubric); el.innerHTML = `${w.rubric.length} criteria · <b class="${t===100?'good':'bad'}">${t} of 100 points</b>`; }
+function updateSum() { const el = $('#sum'); if (el) el.innerHTML = meter(points(work().rubric)); }
+// Counts the numbers on step 1 up from zero.
+function countUp() {
+ if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+ document.querySelectorAll('[data-count]').forEach(el => { const to = +el.dataset.count, t0 = performance.now();
+  (function f(t) { const k = Math.min(1, (t - t0) / 1100), e = 1 - Math.pow(1 - k, 3); el.textContent = fmt(Math.round(to * e)); if (k < 1) requestAnimationFrame(f); })(t0); });
+}
 
-function render() {
- runId++; const s = STEPS[S.step - 1];
- $('#steps').innerHTML = STEPS.map((x, i) => `<button data-go="${i+1}" class="${i+1===S.step?'current':i+1<S.step?'done':''}" aria-label="Step ${i+1}: ${esc(x.title)}" ${i+1===S.step?'aria-current="step"':''}>${i+1}</button>`).join('');
- $('#main').innerHTML = `<span class="eyebrow">${s.act} · Step ${S.step} of ${STEPS.length} · ${s.time}</span><h1>${esc(s.title)}</h1><p class="sub">${esc(s.sub)}</p>${views[S.step]()}`;
- $('#prev').disabled = S.step === 1; $('#next').disabled = S.step === STEPS.length; $('#where').textContent = `${s.act} · ${s.title}`;
- updateSum();
+// ---- Comments. Saved in this browser; "Copy all comments" puts them on the clipboard to paste into Slack.
+let notes = {};
+try { notes = JSON.parse(localStorage.getItem(NOTES_KEY)) || {}; } catch {}
+const saveNotes = () => { try { localStorage.setItem(NOTES_KEY, JSON.stringify(notes)); } catch {} };
+const noteCount = () => Object.values(notes).filter(v => v?.trim()).length;
+const notesText = () => STEPS.map((s, i) => notes[i + 1]?.trim() ? `Step ${i + 1} · ${s.title}\n${notes[i + 1].trim()}` : '').filter(Boolean).join('\n\n');
+function renderNotes() {
+ $('#notes-btn').textContent = noteCount() ? `Comments (${noteCount()})` : 'Comment';
+ if ($('#notes-panel').hidden) return;
+ $('#note-step').textContent = `Step ${S.step} · ${STEPS[S.step - 1].title}`;
+ $('#note-text').value = notes[S.step] || '';
 }
-function go(n) { S.step = Math.min(STEPS.length, Math.max(1, n)); save(); render(); scrollTo(0, 0); }
+
+let shown = 0;
+function render() {
+ runId++; const s = STEPS[S.step - 1], next = STEPS[S.step];
+ $('#steps').innerHTML = STEPS.map((x, i) => `<button data-go="${i + 1}" class="${i + 1 === S.step ? 'current' : i + 1 < S.step ? 'done' : ''}${notes[i + 1]?.trim() ? ' noted' : ''}" aria-label="Step ${i + 1}: ${esc(x.title)}" ${i + 1 === S.step ? 'aria-current="step"' : ''}><span class="dot">${i + 1 < S.step ? '✓' : i + 1}</span><span class="lbl">${esc(x.short)}</span></button>`).join('');
+ $('#main').innerHTML = `<div class="lede"><span class="eyebrow">Step ${S.step} of ${STEPS.length} · ${s.act}</span><h1>${esc(s.title)}</h1><p class="sub">${esc(s.sub)}</p></div>${views[S.step]()}`;
+ if (shown !== S.step) { $('#main').classList.remove('enter'); void $('#main').offsetWidth; $('#main').classList.add('enter'); if (S.step === 1) countUp(); shown = S.step; }
+ $('#prev').disabled = S.step === 1; $('#next').disabled = !next; $('#next').textContent = next ? `Next: ${next.short} →` : 'Done';
+ $('#where').textContent = `${s.act} · ${s.time}`;
+ renderNotes();
+}
+function go(n) { S.step = Math.min(STEPS.length, Math.max(1, n)); save(); render(); scrollTo({top:0}); }
 
 document.addEventListener('click', e => {
- const t = e.target.closest('button'); if (!t) return; const d = t.dataset, w = work(S.pod);
+ const t = e.target.closest('button'); if (!t) return; const d = t.dataset, w = work();
  if (t.id === 'play') return demo.playing ? stopDemo() : startDemo();
- if (e.isTrusted && demo.playing) stopDemo(); // a real click takes over from the runthrough
+ if (e.isTrusted && demo.playing && !t.closest('#notes-panel')) stopDemo(); // a real click takes over from the runthrough
  if (t.id === 'prev') return go(S.step - 1);
  if (t.id === 'next') return go(S.step + 1);
- if (t.id === 'reset') { if (confirm('Clear all pod names, submissions, and results on this browser?')) { S = blank(); save(); render(); } return; }
+ if (t.id === 'reset') { $('#confirm').hidden = false; return; }
+ if (t.id === 'reset-no') { $('#confirm').hidden = true; return; }
+ if (t.id === 'reset-yes') { S = blank(); save(); $('#confirm').hidden = true; shown = 0; return render(); }
+ if (t.id === 'notes-btn') { $('#notes-panel').hidden = !$('#notes-panel').hidden; return renderNotes(); }
+ if (t.id === 'notes-close') { $('#notes-panel').hidden = true; return; }
+ if (t.id === 'notes-copy') { const text = notesText() || 'No comments yet.'; const fallback = () => { $('#notes-all').hidden = false; $('#notes-all').value = text; $('#notes-all').select(); $('#notes-status').textContent = 'Select all and copy the text above.'; };
+  try { navigator.clipboard.writeText(text).then(() => { $('#notes-status').textContent = 'Copied. Paste it into Slack.'; }, fallback); } catch { fallback(); } return; }
  if (d.act === 'close-detail') return $('#detail').close();
  if (d.detail) { const [title, body] = detail(d.detail); $('#detail-title').textContent = title; $('#detail-body').innerHTML = body; if (!$('#detail').open) $('#detail').showModal(); return; }
  if (d.go) { $('#detail').close(); return go(+d.go); }
- if (d.podgo) { S.pod = d.podgo; S.reeval = true; return go(13); }
- if (d.pod) S.pod = d.pod;
- else if (d.dept) { S.dept = +d.dept; S.file = null; }
- else if (d.file) S.file = d.file;
- else if (d.mark) { const m = S.marks[S.pod] ??= []; m[+d.mark] = m[+d.mark] === d.v ? null : d.v; }
+ if (d.src) { S.src = d.src; S.file = 0; }
+ else if (d.file) S.file = +d.file;
+ else if (d.model) S.model = +d.model;
  else if (d.act === 'reveal') S.revealed = true;
+ else if (d.act === 'open-l2') S.openL2 = true;
  else if (d.act === 'add') w.rubric.push({text:'', points:'', mustPass:false});
  else if (d.act === 'del') w.rubric.splice(+d.i, 1);
- else if (d.act === 'example') { if (w.deliverable.trim() && !confirm('Replace this pod’s work with the rehearsal example?')) return; Object.assign(w, {deliverable:SEATS[S.pod].golden, rubric:SEATS[S.pod].rubric.map(r => ({text:r.text, points:r.points, mustPass:r.mustPass})), example:true, submitted:false}); S.marks[S.pod] = []; }
- else if (d.act === 'submit') { w.submitted = true; S.marks[S.pod] = []; }
- else if (d.act === 'reeval') S.reeval = true;
+ else if (d.act === 'example') Object.assign(w, {deliverable:T.golden, rubric:T.rubric.map(r => ({text:r.text, points:r.points, mustPass:r.mustPass})), example:true, submitted:false});
+ else if (d.act === 'submit') w.submitted = true;
+ else if (d.act === 'grade') return grade();
+ else if (d.act === 'gap') S.gap = true;
  else if (d.act === 'train') { save(); render(); return train(); }
- else if (d.act === 'run-baseline') return replay(S.pod, false);
- else if (d.act === 'run-trained') return replay(S.pod, true);
- else if (d.act === 'rerun-baseline') { S.baseline[S.pod] = false; render(); return replay(S.pod, false); }
- else if (d.act === 'rerun-trained') { S.trainedRun[S.pod] = false; render(); return replay(S.pod, true); }
+ else if (d.act === 'run-baseline') return replay(false);
+ else if (d.act === 'run-trained') return replay(true);
+ else if (d.act === 'rerun-baseline') { S.baseline = false; render(); return replay(false); }
+ else if (d.act === 'rerun-trained') { S.trainedRun = false; render(); return replay(true); }
  else return;
  save(); render();
 });
 // Typing saves without re-rendering, so focus and cursor position are kept.
 document.addEventListener('input', e => {
- const d = e.target.dataset, w = work(S.pod);
- if (d.name) S.names[d.name] = e.target.value;
- else if (d.f) { w[d.f] = e.target.value; w.example = false; w.submitted = false; }
+ const d = e.target.dataset, w = work();
+ if (e.target.id === 'note-text') { notes[S.step] = e.target.value; saveNotes(); $('#notes-status').textContent = 'Saved in this browser.'; $('#notes-btn').textContent = noteCount() ? `Comments (${noteCount()})` : 'Comment'; $(`#steps [data-go="${S.step}"]`)?.classList.toggle('noted', !!e.target.value.trim()); return; }
+ if (d.f) { w[d.f] = e.target.value; w.example = false; w.submitted = false; }
  else if (d.r) { w.rubric[+d.r][d.k] = e.target.type === 'checkbox' ? e.target.checked : e.target.value; w.example = false; w.submitted = false; updateSum(); }
  else return;
  save();
@@ -171,24 +215,20 @@ document.addEventListener('keydown', e => {
  if (demo.playing && e.key.startsWith('Arrow')) stopDemo();
  if (e.key === 'ArrowRight') go(S.step + 1); else if (e.key === 'ArrowLeft') go(S.step - 1);
 });
+
 // ---- Demo runthrough. It presses the same controls a person would, so it follows the same rules as a manual run.
 const DEMO_SPEED = 1;
 const demo = {id:0, playing:false, done:false};
 const DEMO = [
- {say:'Meet the company and open one kind of data', run:async d => { await d.wait(1500); await d.click('[data-detail="type:0"]', 2600); await d.click('[data-act="close-detail"]', 400); }},
- {say:'Open a real record from the company files', run:async d => { await d.click('[data-file="June bank statement"]', 2800); }},
- {say:'The executive engagement: prepare for the first audit', run:async d => { await d.wait(2600); }},
- {say:'Break it into 10 tasks and assign 4 pods', run:async d => { await d.click('[data-act="reveal"]', 1500); for (const [p, n] of [['A','Ana and Ben'],['B','Chloe and Dev'],['C','Emre and Fay'],['D','Gus and Hana']]) await d.type(`[data-name="${p}"]`, n); await d.wait(1800); }},
- {say:'Each pod gets its task and packet', run:async d => { await d.click('[data-detail="pod:A"]', 2600); await d.click('[data-act="close-detail"]', 400); }},
- {say:'Pod A writes its reference answer from the evidence', run:async d => { await d.click('[data-act="example"]', 3200); }},
- {say:'Pod A writes its rubric: 10 checks, 100 points', run:async d => { await d.wait(3200); }},
- {say:'Pod A submits its task for review', run:async d => { await d.click('[data-act="submit"]', 2200); }},
- {say:'A baseline agent attempts Pod A’s task', run:async d => { await d.click('[data-act="run-baseline"]'); await d.until(() => S.baseline.A); await d.wait(3200); }},
- {say:'Pod A grades the agent, 1 check at a time', run:async d => { for (const [i, r] of SEATS.A.rubric.entries()) await d.click(`[data-mark="${i}"][data-v="${r.pass ? 'pass' : 'fail'}"]`, 350, 350); await d.wait(2600); }},
- {say:'Train the agent on expert data', run:async d => { await d.click('[data-act="train"]'); await d.until(() => S.trained); await d.wait(1500); }},
- {say:'The trained agent attempts the same task', run:async d => { await d.click('[data-act="run-trained"]'); await d.until(() => S.trainedRun.A); await d.wait(1500); await d.click('[data-detail="diff:"]', 3200); await d.click('[data-act="close-detail"]', 400); }},
- {say:'Evaluate again with the same rubric', run:async d => { await d.click('[data-act="reeval"]', 4500); }},
- {say:'Recap: create, evaluate, train, re-evaluate', run:async d => { await d.wait(5000); }}
+ {say:'Meet the company: a year of real records, by department', run:async d => { await d.wait(2500); await d.click('[data-src="d8"]', 2600); await d.click('[data-src="s0"]', 3000); }},
+ {say:'Break the 100-hour job down to the task you will do', run:async d => { await d.wait(1800); await d.click('[data-act="reveal"]', 1600); await d.click('[data-act="open-l2"]', 2800); }},
+ {say:'Write the golden answer from the source tabs', run:async d => { await d.click('[data-act="example"]', 3200); }},
+ {say:'Write the rubric, then submit the task', run:async d => { await d.wait(2200); await d.click('[data-act="submit"]', 2200); }},
+ {say:'Three AI models try your task: two pass, one is disqualified', run:async d => { await d.click('[data-act="run-baseline"]'); await d.until(() => S.baseline); await d.wait(1600); await d.click('[data-act="grade"]'); await d.until(() => S.graded); await d.wait(1600); await d.click('[data-model="0"]', 2600); }},
+ {say:'The catch: the same judgment inside a long task', run:async d => { await d.wait(1500); await d.click('[data-act="gap"]', 4500); }},
+ {say:'Reinforcement learning on the long task', run:async d => { await d.click('[data-act="train"]'); await d.until(() => S.trained); await d.wait(1500); }},
+ {say:'After training: the long task, graded again', run:async d => { await d.click('[data-act="run-trained"]'); await d.until(() => S.trainedRun); await d.wait(4000); }},
+ {say:'Recap: create, evaluate, find the gap, train, evaluate again', run:async d => { await d.wait(5000); }}
 ];
 function demoBar(i) {
  $('#demo-bar').hidden = !demo.playing;
@@ -198,17 +238,16 @@ function demoBar(i) {
 }
 function stopDemo() { demo.id++; demo.playing = false; document.querySelectorAll('.demo-target').forEach(el => el.classList.remove('demo-target')); demoBar(); }
 async function startDemo() {
- if ((Object.keys(S.work).length || S.revealed || S.trained) && !confirm('The demo starts from a clean session. Clear the current work on this browser?')) return;
- const id = ++demo.id; demo.playing = true; demo.done = false; $('#detail').close(); S = blank(); save();
+ const id = ++demo.id; demo.playing = true; demo.done = false; $('#detail').close(); S = blank(); save(); shown = 0;
  const wait = ms => new Promise((res, rej) => setTimeout(() => id === demo.id ? res() : rej('stopped'), ms / DEMO_SPEED));
  const d = {wait,
   async click(sel, after = 0, before = 700) { const el = $(sel); if (!el) return; el.scrollIntoView({block:'center', behavior:'smooth'}); el.classList.add('demo-target'); await wait(before); el.classList.remove('demo-target'); el.click(); await wait(after); },
-  async type(sel, text) { const el = $(sel); if (!el) return; el.classList.add('demo-target'); for (let n = 1; n <= text.length; n++) { el.value = text.slice(0, n); await wait(35); } el.dispatchEvent(new Event('input', {bubbles:true})); el.classList.remove('demo-target'); },
   async until(done) { for (let n = 0; n < 600 && !done(); n++) await wait(100 * DEMO_SPEED); }};
  try { for (let i = 0; i < DEMO.length; i++) { go(i + 1); demoBar(i); await DEMO[i].run(d); } demo.done = true; } catch (stopped) { if (stopped !== 'stopped') throw stopped; return; }
  demo.playing = false; demoBar();
 }
 // The narrative page links to a step with #step-N.
 const linked = location.hash.match(/^#step-(\d+)$/); if (linked) S.step = Math.min(STEPS.length, Math.max(1, +linked[1]));
+if (!views[S.step]) S.step = 1;
 render();
 if (new URLSearchParams(location.search).has('demo')) startDemo(); // share link: ?demo starts the runthrough

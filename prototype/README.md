@@ -1,18 +1,12 @@
-# CEO Bench live demo · interactive prototype v2
+# CEO Bench live demo · interactive prototype v3
 
-Follows the 14-scene v2 storyboard: create a task, evaluate a baseline agent, grade it, train, run the trained agent, re-evaluate, recap.
+Nine steps: company and data, task breakdown, golden answer, rubric, model eval, the catch, training, after training, recap.
 
-Run from the folder above this one (so the narrative link resolves), then open http://127.0.0.1:8770/prototype/
+- `content.js`: all step titles, narration, and facilitator notes. Edit copy there.
+- `corpus.js`: dataset counts and short excerpts from the Cirrus Sleep Y1 corpus.
+- `l1.js`: today's real task (L1-04-01), its rubric, golden answer, and three recorded model results.
+- `data.js`: the L2 "catch" and training values, which are placeholders.
 
-```sh
-python3 -m http.server 8770 --bind 127.0.0.1
-```
+Press Play demo, or open with `?demo`, for the automated runthrough. Arrow keys change steps. The Comment button saves notes per screen in this browser.
 
-- `content.js` holds all step titles, narration, and facilitator notes. Edit copy there.
-- `data.js` holds the 4 pod packets, reference answers, rubrics, and agent attempts.
-- Arrow keys change steps. Work is saved in this browser only.
-- The narrative (what to say, do, and disclose per step) is a separate page that reads `content.js`. Open a step directly with `#step-9`.
-
-Everything is a rehearsal fixture. Packets, agent attempts, the training curve, and scores are authored; no model is called. There is no backend: pods share one browser.
-
-Check with `node verify.cjs`.
+No model is called live. Check with `node verify.cjs`.
