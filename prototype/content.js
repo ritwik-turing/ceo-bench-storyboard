@@ -53,21 +53,21 @@ const STEPS = [
  {
   "act": "The gap",
   "time": "56:00–60:00",
-  "title": "The catch: the same judgment inside a bigger task",
-  "sub": "The department-level (L2) task that contains your task, and how models did on those exact checks.",
-  "say": "You did this in about 40 minutes, and two of three models passed. Now here is the department task it sits inside: the full FY2021 board model inputs, which combine all six of these small tasks over a full year of records. Inside it, models lost points on this same judgment. Short-horizon skill collapses at long horizon. That is the gap CEO Bench measures.",
-  "cue": "Show the parent L2 task, then reveal the checks that contain the same judgment and which models missed them. Let it land before moving on.",
-  "disclose": "Placeholder checks and anonymous model results until Jeff supplies the real per-criterion results for L2-04. Do not name real models next to placeholder results.",
+  "title": "The catch: the same numbers inside a bigger job",
+  "sub": "Your task on its own, then the task that combines all five small tasks, with how each model did.",
+  "say": "You did this in about 40 minutes, and two of three models passed. Now here is the bigger job it belongs to: all five small tasks combined into one board-inputs workbook, with the same quarterly numbers inside. Gemini got those numbers right on their own. Inside the combined task, it got the very same numbers wrong and could not trace its sources, so it was voided. Every model lost points. Short tasks are easy; long, real work is where models break. That is the gap CEO Bench measures.",
+  "cue": "Read the two score rows: on its own, then inside the bigger job. Press the button, then point at the highlighted fulfillment rows in Gemini’s column.",
+  "disclose": "Real recorded results from the pilot: L1-04-06 assembles L1-04-01 to L1-04-05 into the board-inputs workbook, the closest real evidence to the L2-04 deliverable. L2-04 model runs themselves are not available. Confirm model versions before naming them to press.",
   "short": "The catch"
  },
  {
   "act": "Train the agent",
   "time": "60:00–63:00",
-  "title": "Reinforcement learning: train on the long tasks",
-  "sub": "The agent attempts the long task many times; each graded attempt teaches it what earns points.",
-  "say": "This is where expert data matters. The agent attempts the department-level task many times, the rubric grades each attempt, and the model learns what earns points. Expert answers like yours show it what good looks like.",
-  "cue": "Press Start training. Let the reward curve climb.",
-  "disclose": "Simulated run with illustrative values.",
+  "title": "Reinforcement learning: train on the expert data",
+  "sub": "Download the expert-curated dataset, then train. Every expert input is part of the training signal.",
+  "say": "Before training starts, here is everything the experts produced, packaged the way an AI lab receives it: the task and its source files, the golden answer, the rubric with its weights and must-pass gates, every graded attempt, and the grader notes. A lab can download it right here. Each of these is a dimension of training. The files are the environment, the golden answer shows what good looks like, the rubric is the reward, the must-pass checks are hard limits, and the graded attempts are the examples the model learns from.",
+  "cue": "Open Preview or download the dataset, and read the “Used in training as” column. Then press Train on the expert dataset and watch the training signals light up.",
+  "disclose": "The dataset contents are real L1-04-01 pilot data. The reward definition (rubric score, zero if a must-pass check fails) and the training run are illustrative. Note: the download includes the golden answer and rubric, which Jeff’s ground rules keep on screen only for journalists.",
   "short": "Training"
  },
  {

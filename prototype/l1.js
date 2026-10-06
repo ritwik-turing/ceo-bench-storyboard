@@ -41,21 +41,337 @@ const TASK = {
  "files": [
   {
    "ref": "S1",
+   "tab": "IS_Monthly",
    "name": "IS_Monthly (monthly income statement)",
-   "body": "MONTHLY INCOME STATEMENT (months + quarters + FY)\nLine | Jan | Feb | Mar | Apr | May | Jun | Jul | Aug | Sep | Oct | Nov | Dec | Q1 | Q2 | Q3 | Q4 | FY\nRevenue | 0 | 5,900 | 53,100 | 69,000 | 57,500 | 69,000 | 123,200 | 89,600 | 123,200 | 128,000 | 281,600 | 204,800 | 59,000 | 195,500 | 336,000 | 614,400 | 1,204,900\nFulfillment & Shipping | 500 | 1,000 | 6,500 | 10,000 | 8,000 | 10,000 | 20,000 | 22,000 | 6,000 | 18,000 | 40,000 | 30,000 | 8,000 | 28,000 | 48,000 | 88,000 | 172,000"
+   "body": "MONTHLY INCOME STATEMENT (months + quarters + FY)\nLine | Jan | Feb | Mar | Apr | May | Jun | Jul | Aug | Sep | Oct | Nov | Dec | Q1 | Q2 | Q3 | Q4 | FY\nRevenue | 0 | 5,900 | 53,100 | 69,000 | 57,500 | 69,000 | 123,200 | 89,600 | 123,200 | 128,000 | 281,600 | 204,800 | 59,000 | 195,500 | 336,000 | 614,400 | 1,204,900\nFulfillment & Shipping | 500 | 1,000 | 6,500 | 10,000 | 8,000 | 10,000 | 20,000 | 22,000 | 6,000 | 18,000 | 40,000 | 30,000 | 8,000 | 28,000 | 48,000 | 88,000 | 172,000",
+   "segments": [
+    {
+     "note": "MONTHLY INCOME STATEMENT (months + quarters + FY)"
+    },
+    {
+     "header": [
+      "Line",
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec",
+      "Q1",
+      "Q2",
+      "Q3",
+      "Q4",
+      "FY"
+     ],
+     "rows": [
+      [
+       "Revenue",
+       "0",
+       "5,900",
+       "53,100",
+       "69,000",
+       "57,500",
+       "69,000",
+       "123,200",
+       "89,600",
+       "123,200",
+       "128,000",
+       "281,600",
+       "204,800",
+       "59,000",
+       "195,500",
+       "336,000",
+       "614,400",
+       "1,204,900"
+      ],
+      [
+       "Fulfillment & Shipping",
+       "500",
+       "1,000",
+       "6,500",
+       "10,000",
+       "8,000",
+       "10,000",
+       "20,000",
+       "22,000",
+       "6,000",
+       "18,000",
+       "40,000",
+       "30,000",
+       "8,000",
+       "28,000",
+       "48,000",
+       "88,000",
+       "172,000"
+      ]
+     ]
+    }
+   ]
   },
   {
    "ref": "S2",
+   "tab": "PnL_Quarterly",
    "name": "PnL_Quarterly (quarterly and full-year P&L)",
-   "body": "QUARTERLY & FY P&L (rollup of IS_Monthly)\nLine | Q1 | Q2 | Q3 | Q4 | FY\nRevenue | 59,000 | 195,500 | 336,000 | 614,400 | 1,204,900\nFulfillment & Shipping | 8,000 | 28,000 | 48,000 | 88,000 | 172,000"
+   "body": "QUARTERLY & FY P&L (rollup of IS_Monthly)\nLine | Q1 | Q2 | Q3 | Q4 | FY\nRevenue | 59,000 | 195,500 | 336,000 | 614,400 | 1,204,900\nFulfillment & Shipping | 8,000 | 28,000 | 48,000 | 88,000 | 172,000",
+   "segments": [
+    {
+     "note": "QUARTERLY & FY P&L (rollup of IS_Monthly)"
+    },
+    {
+     "header": [
+      "Line",
+      "Q1",
+      "Q2",
+      "Q3",
+      "Q4",
+      "FY"
+     ],
+     "rows": [
+      [
+       "Revenue",
+       "59,000",
+       "195,500",
+       "336,000",
+       "614,400",
+       "1,204,900"
+      ],
+      [
+       "Fulfillment & Shipping",
+       "8,000",
+       "28,000",
+       "48,000",
+       "88,000",
+       "172,000"
+      ]
+     ]
+    }
+   ]
   },
   {
    "ref": "S3",
+   "tab": "Apex_Crisis",
    "name": "Apex_Crisis (the August shipping incident)",
-   "body": "APEX CRISIS (August)\nItem | Value\nUnits delayed | 4,000 (~3 wks)\nCause | Port-LA backlog clogged Ontario dock; NovaTex truck deprioritized\nLost revenue | ~$45,000 (MEMO, never booked)\nSLA credit | $12,000 (Q3 Fulfillment, Sep)\nNPS | 45 -> 31"
+   "body": "APEX CRISIS (August)\nItem | Value\nUnits delayed | 4,000 (~3 wks)\nCause | Port-LA backlog clogged Ontario dock; NovaTex truck deprioritized\nLost revenue | ~$45,000 (MEMO, never booked)\nSLA credit | $12,000 (Q3 Fulfillment, Sep)\nNPS | 45 -> 31",
+   "segments": [
+    {
+     "note": "APEX CRISIS (August)"
+    },
+    {
+     "header": [
+      "Item",
+      "Value"
+     ],
+     "rows": [
+      [
+       "Units delayed",
+       "4,000 (~3 wks)"
+      ],
+      [
+       "Cause",
+       "Port-LA backlog clogged Ontario dock; NovaTex truck deprioritized"
+      ],
+      [
+       "Lost revenue",
+       "~$45,000 (MEMO, never booked)"
+      ],
+      [
+       "SLA credit",
+       "$12,000 (Q3 Fulfillment, Sep)"
+      ],
+      [
+       "NPS",
+       "45 -> 31"
+      ]
+     ]
+    }
+   ]
   }
  ],
+ "source": "Cirrus_Sleep_Canonical_Facts_Trusted.xlsx",
  "golden": "Cirrus Sleep — FY2021 Fulfillment & Shipping by Fiscal Quarter (GOLDEN)\nSource of truth: Cirrus_Sleep_Canonical_Facts_Trusted.xlsx (v3.1) · Drive id 11ENGDBu0Vyq8GkWm9U29t0vTATySnlnx. Amounts\nBASIS NOTE — gross vs. net of the $12,000 Apex SLA credit\nThe canonical FY total of $172,000 is stated NET of the $12,000 Apex SLA credit.  Evidence: (1) Apex_Crisis!B6 records t\nQuarter | Fulfillment | Shipping | Total | Source (canonical A1) | Flag / Notes\nQ1 | N/A — combined 'Fulfillment & Shipping' line | N/A — combined 'Fulfillment & Shipping' line | 8,000 | IS_Monthly!N10 · PnL_Quarterly!B10 | AMBIGUOUS_SPLIT — canonical records ONE combined 'Fulfillment & Shipping' line (Apex/SwiftShip 3PL, per Vendors tab). No",
+ "goldenSegments": [
+  {
+   "note": "Cirrus Sleep — FY2021 Fulfillment & Shipping by Fiscal Quarter (GOLDEN)"
+  },
+  {
+   "note": "Source of truth: Cirrus_Sleep_Canonical_Facts_Trusted.xlsx (v3.1) · Drive id 11ENGDBu0Vyq8GkWm9U29t0vTATySnlnx. Amounts USD, whole dollars, accrual (GAAP). A1 refs follow the canonical layout (title row 1, header row 2; 'Fulfillment & Shipping' = row 10 of IS_Monthly/PnL_Quarterly)."
+  },
+  {
+   "note": "BASIS NOTE — gross vs. net of the $12,000 Apex SLA credit"
+  },
+  {
+   "note": "The canonical FY total of $172,000 is stated NET of the $12,000 Apex SLA credit.  Evidence: (1) Apex_Crisis!B6 records the credit as '$12,000 (Q3 Fulfillment, Sep)'.  (2) September F&S is $6,000 (IS_Monthly!J10) — anomalously low: September had 1,100 orders (Revenue_Monthly!B11), identical to July's 1,100 (Revenue_Monthly!B9) whose F&S was $20,000 (IS_Monthly!H10), and above October's 1,000 orders (Revenue_Monthly!B12) whose F&S was $18,000 (IS_Monthly!K10); the ~$12k gap is the credit netted into September.  Gross (pre-credit) equivalents: FY $184,000 · Q3 $60,000 · Sep $18,000.  Per instruction the credit is NOT applied here — all figures are as-stated (net) in the canonical; applying/removing it is task L1-02."
+  },
+  {
+   "header": [
+    "Quarter",
+    "Fulfillment",
+    "Shipping",
+    "Total",
+    "Source (canonical A1)",
+    "Flag / Notes"
+   ],
+   "rows": [
+    [
+     "Q1",
+     "N/A — combined 'Fulfillment & Shipping' line",
+     "N/A — combined 'Fulfillment & Shipping' line",
+     "8,000",
+     "IS_Monthly!N10 · PnL_Quarterly!B10",
+     "AMBIGUOUS_SPLIT — canonical records ONE combined 'Fulfillment & Shipping' line (Apex/SwiftShip 3PL, per Vendors tab). No fulfillment-vs-shipping decomposition exists, so those columns cannot be populated; Total is the as-stated combined figure."
+    ],
+    [
+     "Q2",
+     "N/A — combined 'Fulfillment & Shipping' line",
+     "N/A — combined 'Fulfillment & Shipping' line",
+     "28,000",
+     "IS_Monthly!O10 · PnL_Quarterly!C10",
+     "AMBIGUOUS_SPLIT — canonical records ONE combined 'Fulfillment & Shipping' line (Apex/SwiftShip 3PL, per Vendors tab). No fulfillment-vs-shipping decomposition exists, so those columns cannot be populated; Total is the as-stated combined figure."
+    ],
+    [
+     "Q3",
+     "N/A — combined 'Fulfillment & Shipping' line",
+     "N/A — combined 'Fulfillment & Shipping' line",
+     "48,000",
+     "IS_Monthly!P10 · PnL_Quarterly!D10 · Apex_Crisis!B6",
+     "AMBIGUOUS_SPLIT — canonical records ONE combined 'Fulfillment & Shipping' line (Apex/SwiftShip 3PL, per Vendors tab). No fulfillment-vs-shipping decomposition exists, so those columns cannot be populated; Total is the as-stated combined figure. Q3 total is NET of the $12k Apex credit (Sep) — see Basis Note."
+    ],
+    [
+     "Q4",
+     "N/A — combined 'Fulfillment & Shipping' line",
+     "N/A — combined 'Fulfillment & Shipping' line",
+     "88,000",
+     "IS_Monthly!Q10 · PnL_Quarterly!E10",
+     "AMBIGUOUS_SPLIT — canonical records ONE combined 'Fulfillment & Shipping' line (Apex/SwiftShip 3PL, per Vendors tab). No fulfillment-vs-shipping decomposition exists, so those columns cannot be populated; Total is the as-stated combined figure."
+    ],
+    [
+     "FY Total",
+     "N/A — combined 'Fulfillment & Shipping' line",
+     "N/A — combined 'Fulfillment & Shipping' line",
+     "172,000",
+     "IS_Monthly!R10 · PnL_Quarterly!F10 · Reconciliation §1 (ties, OK)",
+     "Combined line; NET of $12k Apex credit. Gross = $184,000 (see roll-up)."
+    ]
+   ]
+  },
+  {
+   "note": "SUPPORTING MONTHLY BUILD-UP (net booked) — each month traceable to IS_Monthly!row 10 and AP_Schedule!row 4"
+  },
+  {
+   "header": [
+    "Month",
+    "Quarter",
+    "Net booked F&S",
+    "Apex SLA credit embedded",
+    "Gross before credit",
+    "Source (canonical A1)"
+   ],
+   "rows": [
+    [
+     "Jan",
+     "Q1",
+     "500",
+     "0",
+     "500",
+     "IS_Monthly!B10 · AP_Schedule!B4"
+    ],
+    [
+     "Feb",
+     "Q1",
+     "1,000",
+     "0",
+     "1,000",
+     "IS_Monthly!C10 · AP_Schedule!C4"
+    ],
+    [
+     "Mar",
+     "Q1",
+     "6,500",
+     "0",
+     "6,500",
+     "IS_Monthly!D10 · AP_Schedule!D4"
+    ],
+    [
+     "Apr",
+     "Q2",
+     "10,000",
+     "0",
+     "10,000",
+     "IS_Monthly!E10 · AP_Schedule!E4"
+    ],
+    [
+     "May",
+     "Q2",
+     "8,000",
+     "0",
+     "8,000",
+     "IS_Monthly!F10 · AP_Schedule!F4"
+    ],
+    [
+     "Jun",
+     "Q2",
+     "10,000",
+     "0",
+     "10,000",
+     "IS_Monthly!G10 · AP_Schedule!G4"
+    ],
+    [
+     "Jul",
+     "Q3",
+     "20,000",
+     "0",
+     "20,000",
+     "IS_Monthly!H10 · AP_Schedule!H4"
+    ],
+    [
+     "Aug",
+     "Q3",
+     "22,000",
+     "0",
+     "22,000",
+     "IS_Monthly!I10 · AP_Schedule!I4"
+    ],
+    [
+     "Sep",
+     "Q3",
+     "6,000",
+     "-12,000",
+     "18,000",
+     "IS_Monthly!J10 · AP_Schedule!J4 · Apex_Crisis!B6"
+    ],
+    [
+     "Oct",
+     "Q4",
+     "18,000",
+     "0",
+     "18,000",
+     "IS_Monthly!K10 · AP_Schedule!K4"
+    ],
+    [
+     "Nov",
+     "Q4",
+     "40,000",
+     "0",
+     "40,000",
+     "IS_Monthly!L10 · AP_Schedule!L4"
+    ],
+    [
+     "Dec",
+     "Q4",
+     "30,000",
+     "0",
+     "30,000",
+     "IS_Monthly!M10 · AP_Schedule!M4"
+    ]
+   ]
+  }
+ ],
  "rubric": [
   {
    "id": "O1",
@@ -183,7 +499,113 @@ const TASK = {
    "total": 97,
    "pass": true,
    "failed": [],
-   "answer": "Cirrus Sleep — FY2021 Fulfillment & Shipping by Fiscal Quarter\nSource: Cirrus_Sleep_Canonical_Facts_Trusted.xlsx (v3.1, trusted\nBASIS NOTE — gross vs. net of the $12,000 Apex SLA credit\nThe canonical FY total of $172,000 is stated NET of the $12,000\nQuarter | Fulfillment | Shipping | Total | Source (canonical tab · row · column) | Flag / Notes"
+   "answer": "Cirrus Sleep — FY2021 Fulfillment & Shipping by Fiscal Quarter\nSource: Cirrus_Sleep_Canonical_Facts_Trusted.xlsx (v3.1, trusted\nBASIS NOTE — gross vs. net of the $12,000 Apex SLA credit\nThe canonical FY total of $172,000 is stated NET of the $12,000\nQuarter | Fulfillment | Shipping | Total | Source (canonical tab · row · column) | Flag / Notes",
+   "segments": [
+    {
+     "note": "Cirrus Sleep — FY2021 Fulfillment & Shipping by Fiscal Quarter"
+    },
+    {
+     "note": "Source: Cirrus_Sleep_Canonical_Facts_Trusted.xlsx (v3.1, trusted) · Google Drive id 11ENGDBu0Vyq8GkWm9U29t0vTATySnlnx · prepared 2026-07-09"
+    },
+    {
+     "note": "BASIS NOTE — gross vs. net of the $12,000 Apex SLA credit"
+    },
+    {
+     "note": "The canonical FY total of $172,000 is stated NET of the $12,000 Apex SLA credit. Per the Apex_Crisis tab the credit was booked to Q3 Fulfillment (September). Corroborating evidence: September Fulfillment & Shipping is $6,000, anomalously low versus comparable-volume months (Jul $20,000 at 1,100 orders; Oct $18,000 at 1,000 orders; Sep also had 1,100 orders), consistent with a ~$12K reduction being embedded in the September figure. Gross (pre-credit) equivalents would be approximately: FY $184,000 · Q3 $60,000 · Sep $18,000. Per instruction, the credit is NOT applied in this tab — all figures are shown as-stated (net) in the canonical. Applying/removing the credit is deferred to task L1-02."
+    },
+    {
+     "header": [
+      "Quarter",
+      "Fulfillment",
+      "Shipping",
+      "Total",
+      "Source (canonical tab · row · column)",
+      "Flag / Notes"
+     ],
+     "rows": [
+      [
+       "Q1",
+       "n/s",
+       "n/s",
+       "8,000",
+       "IS_Monthly · 'Fulfillment & Shipping' · Q1  (corrob. PnL_Quarterly · Q1; Reconciliation line 1)",
+       "AMBIGUOUS SPLIT: canonical records a single combined 'Fulfillment & Shipping' line (Apex/SwiftShip 3PL). No Fulfillment-vs-Shipping decomposition exists in the source, so those columns cannot be populated; Total is the as-stated combined figure."
+      ],
+      [
+       "Q2",
+       "n/s",
+       "n/s",
+       "28,000",
+       "IS_Monthly · 'Fulfillment & Shipping' · Q2  (corrob. PnL_Quarterly · Q2; Reconciliation line 1)",
+       "AMBIGUOUS SPLIT: canonical records a single combined 'Fulfillment & Shipping' line (Apex/SwiftShip 3PL). No Fulfillment-vs-Shipping decomposition exists in the source, so those columns cannot be populated; Total is the as-stated combined figure."
+      ],
+      [
+       "Q3",
+       "n/s",
+       "n/s",
+       "48,000",
+       "IS_Monthly · 'Fulfillment & Shipping' · Q3  (corrob. PnL_Quarterly · Q3; Apex_Crisis 'SLA credit')",
+       "AMBIGUOUS SPLIT: canonical records a single combined 'Fulfillment & Shipping' line (Apex/SwiftShip 3PL). No Fulfillment-vs-Shipping decomposition exists in the source, so those columns cannot be populated; Total is the as-stated combined figure. Q3 is NET of the $12K Apex SLA credit (booked in Sep) — see Basis Note."
+      ],
+      [
+       "Q4",
+       "n/s",
+       "n/s",
+       "88,000",
+       "IS_Monthly · 'Fulfillment & Shipping' · Q4  (corrob. PnL_Quarterly · Q4; Reconciliation line 1)",
+       "AMBIGUOUS SPLIT: canonical records a single combined 'Fulfillment & Shipping' line (Apex/SwiftShip 3PL). No Fulfillment-vs-Shipping decomposition exists in the source, so those columns cannot be populated; Total is the as-stated combined figure."
+      ],
+      [
+       "FY Total",
+       "n/s",
+       "n/s",
+       "172,000",
+       "IS_Monthly · 'Fulfillment & Shipping' · FY = $172,000 (ties Σ quarters; Reconciliation line 1 = OK)",
+       "Combined line; NET of $12K Apex SLA credit (see Basis Note). Split n/s."
+      ]
+     ]
+    },
+    {
+     "note": "Legend:  n/s = not separately stated in canonical (single combined line).  Blue = value transcribed from canonical.  Black = formula."
+    },
+    {
+     "note": "Supporting detail — monthly Fulfillment & Shipping (IS_Monthly · 'Fulfillment & Shipping' row) — quarter subtotals tie to table above"
+    },
+    {
+     "header": [
+      "Quarter",
+      "Month",
+      "Fulfillment & Shipping (combined)",
+      "Quarter subtotal"
+     ],
+     "rows": [
+      [
+       "Q1",
+       "Jan",
+       "500",
+       ""
+      ],
+      [
+       "Q1",
+       "Feb",
+       "1,000",
+       ""
+      ],
+      [
+       "Q1",
+       "Mar",
+       "6,500",
+       "8,000"
+      ],
+      [
+       "Q2",
+       "Apr",
+       "10,000",
+       ""
+      ]
+     ]
+    }
+   ]
   },
   {
    "name": "ChatGPT",
@@ -207,7 +629,155 @@ const TASK = {
    "failed": [
     "O3"
    ],
-   "answer": "FY2021 Fulfillment & Shipping by Fiscal Quarter\nSource basis: Cirrus_Sleep_Canonical_Facts_Trusted.xlsx > P&L Mo\nImportant note: the canonical $172,000 FY2021 total is net of th\nQuarter | Fulfillment | Shipping | Total | Source tab/cells | Basis note | Missing/Ambiguous source flag\nQ1 | N/A - combined F&S line | N/A - combined F&S line | 8,000 | Canonical P&L Monthly!B15:D15; Operations Fulfillment_Shipping!D | Net booked F&S; no credit in Q1 | AMBIGUOUS_SPLIT\nQ2 | N/A - combined F&S line | N/A - combined F&S line | 28,000 | Canonical P&L Monthly!E15:G15; Operations Fulfillment_Shipping!D | Net booked F&S; no credit in Q2 | AMBIGUOUS_SPLIT\nQ3 | N/A - combined F&S line | N/A - combined F&S line | 48,000 | Canonical P&L Monthly!H15:J15; Operations Fulfillment_Shipping!D | Net booked F&S; Q3 includes Apex SLA credit netted in Sep | AMBIGUOUS_SPLIT\nQ4 | N/A - combined F&S line | N/A - combined F&S line | 88,000 | Canonical P&L Monthly!K15:M15; Operations Fulfillment_Shipping!D | Net booked F&S; no credit in Q4 | AMBIGUOUS_SPLIT\nFY2021 check | N/A - combined F&S line | N/A - combined F&S line | 172,000 | Canonical P&L Monthly!N15; Operations Fulfillment_Shipping!D25 | Net booked F&S; gross 184,000 less 12,000 credit | AMBIGUOUS_SPLIT"
+   "answer": "FY2021 Fulfillment & Shipping by Fiscal Quarter\nSource basis: Cirrus_Sleep_Canonical_Facts_Trusted.xlsx > P&L Mo\nImportant note: the canonical $172,000 FY2021 total is net of th\nQuarter | Fulfillment | Shipping | Total | Source tab/cells | Basis note | Missing/Ambiguous source flag\nQ1 | N/A - combined F&S line | N/A - combined F&S line | 8,000 | Canonical P&L Monthly!B15:D15; Operations Fulfillment_Shipping!D | Net booked F&S; no credit in Q1 | AMBIGUOUS_SPLIT\nQ2 | N/A - combined F&S line | N/A - combined F&S line | 28,000 | Canonical P&L Monthly!E15:G15; Operations Fulfillment_Shipping!D | Net booked F&S; no credit in Q2 | AMBIGUOUS_SPLIT\nQ3 | N/A - combined F&S line | N/A - combined F&S line | 48,000 | Canonical P&L Monthly!H15:J15; Operations Fulfillment_Shipping!D | Net booked F&S; Q3 includes Apex SLA credit netted in Sep | AMBIGUOUS_SPLIT\nQ4 | N/A - combined F&S line | N/A - combined F&S line | 88,000 | Canonical P&L Monthly!K15:M15; Operations Fulfillment_Shipping!D | Net booked F&S; no credit in Q4 | AMBIGUOUS_SPLIT\nFY2021 check | N/A - combined F&S line | N/A - combined F&S line | 172,000 | Canonical P&L Monthly!N15; Operations Fulfillment_Shipping!D25 | Net booked F&S; gross 184,000 less 12,000 credit | AMBIGUOUS_SPLIT",
+   "segments": [
+    {
+     "note": "FY2021 Fulfillment & Shipping by Fiscal Quarter"
+    },
+    {
+     "note": "Source basis: Cirrus_Sleep_Canonical_Facts_Trusted.xlsx > P&L Monthly / P&L Quarterly, cross-checked to Operations AP Board Inputs. Amounts are USD whole dollars."
+    },
+    {
+     "note": "Important note: the canonical $172,000 FY2021 total is net of the $12,000 Apex SLA credit. This tab keeps the booked net totals and does not apply a separate L1-02 credit adjustment."
+    },
+    {
+     "header": [
+      "Quarter",
+      "Fulfillment",
+      "Shipping",
+      "Total",
+      "Source tab/cells",
+      "Basis note",
+      "Missing/Ambiguous source flag"
+     ],
+     "rows": [
+      [
+       "Q1",
+       "N/A - combined F&S line",
+       "N/A - combined F&S line",
+       "8,000",
+       "Canonical P&L Monthly!B15:D15; Operations Fulfillment_Shipping!D21",
+       "Net booked F&S; no credit in Q1",
+       "AMBIGUOUS_SPLIT"
+      ],
+      [
+       "Q2",
+       "N/A - combined F&S line",
+       "N/A - combined F&S line",
+       "28,000",
+       "Canonical P&L Monthly!E15:G15; Operations Fulfillment_Shipping!D22",
+       "Net booked F&S; no credit in Q2",
+       "AMBIGUOUS_SPLIT"
+      ],
+      [
+       "Q3",
+       "N/A - combined F&S line",
+       "N/A - combined F&S line",
+       "48,000",
+       "Canonical P&L Monthly!H15:J15; Operations Fulfillment_Shipping!D23",
+       "Net booked F&S; Q3 includes Apex SLA credit netted in Sep",
+       "AMBIGUOUS_SPLIT"
+      ],
+      [
+       "Q4",
+       "N/A - combined F&S line",
+       "N/A - combined F&S line",
+       "88,000",
+       "Canonical P&L Monthly!K15:M15; Operations Fulfillment_Shipping!D24",
+       "Net booked F&S; no credit in Q4",
+       "AMBIGUOUS_SPLIT"
+      ],
+      [
+       "FY2021 check",
+       "N/A - combined F&S line",
+       "N/A - combined F&S line",
+       "172,000",
+       "Canonical P&L Monthly!N15; Operations Fulfillment_Shipping!D25",
+       "Net booked F&S; gross 184,000 less 12,000 credit",
+       "AMBIGUOUS_SPLIT"
+      ]
+     ]
+    },
+    {
+     "note": "Monthly source detail used to derive quarterly totals"
+    },
+    {
+     "header": [
+      "Month",
+      "Quarter",
+      "Booked F&S invoices",
+      "Apex SLA credit embedded",
+      "Gross before SLA credit",
+      "Source tab/cells",
+      "Status / flag"
+     ],
+     "rows": [
+      [
+       "Jan",
+       "Q1",
+       "500",
+       "0",
+       "500",
+       "Canonical P&L Monthly!B15; Operations Fulfillment_Shipping!C5:E5",
+       "OK - combined F&S source"
+      ],
+      [
+       "Feb",
+       "Q1",
+       "1,000",
+       "0",
+       "1,000",
+       "Canonical P&L Monthly!C15; Operations Fulfillment_Shipping!C6:E6",
+       "OK - combined F&S source"
+      ],
+      [
+       "Mar",
+       "Q1",
+       "6,500",
+       "0",
+       "6,500",
+       "Canonical P&L Monthly!D15; Operations Fulfillment_Shipping!C7:E7",
+       "OK - combined F&S source"
+      ],
+      [
+       "Apr",
+       "Q2",
+       "10,000",
+       "0",
+       "10,000",
+       "Canonical P&L Monthly!E15; Operations Fulfillment_Shipping!C8:E8",
+       "OK - combined F&S source"
+      ],
+      [
+       "May",
+       "Q2",
+       "8,000",
+       "0",
+       "8,000",
+       "Canonical P&L Monthly!F15; Operations Fulfillment_Shipping!C9:E9",
+       "OK - combined F&S source"
+      ],
+      [
+       "Jun",
+       "Q2",
+       "10,000",
+       "0",
+       "10,000",
+       "Canonical P&L Monthly!G15; Operations Fulfillment_Shipping!C10:E10",
+       "OK - combined F&S source"
+      ],
+      [
+       "Jul",
+       "Q3",
+       "20,000",
+       "0",
+       "20,000",
+       "Canonical P&L Monthly!H15; Operations Fulfillment_Shipping!C11:E11",
+       "OK - combined F&S source"
+      ]
+     ]
+    }
+   ]
   },
   {
    "name": "Gemini",
@@ -229,8 +799,233 @@ const TASK = {
    "total": 91,
    "pass": true,
    "failed": [],
-   "answer": "FY2021 Fulfillment & Shipping Costs by Quarter\nQuarter | Fulfillment | Shipping | Total | Source Citations\nQ1 | Missing Split 🚩 | Missing Split 🚩 | 8,000 | PnL_Quarterly.csv (Line 8); IS_Monthly.csv\nQ2 | Missing Split 🚩 | Missing Split 🚩 | 28,000 | PnL_Quarterly.csv (Line 8); IS_Monthly.csv\nQ3 | Missing Split 🚩 | Missing Split 🚩 | 48,000 | PnL_Quarterly.csv (Line 8); IS_Monthly.csv\nQ4 | Missing Split 🚩 | Missing Split 🚩 | 88,000 | PnL_Quarterly.csv (Line 8); IS_Monthly.csv\nFY2021 | Missing Split 🚩 | Missing Split 🚩 | 172,000 | PnL_Quarterly.csv (Line 8); Reconciliation.csv\nNotes & Flags"
+   "answer": "FY2021 Fulfillment & Shipping Costs by Quarter\nQuarter | Fulfillment | Shipping | Total | Source Citations\nQ1 | Missing Split 🚩 | Missing Split 🚩 | 8,000 | PnL_Quarterly.csv (Line 8); IS_Monthly.csv\nQ2 | Missing Split 🚩 | Missing Split 🚩 | 28,000 | PnL_Quarterly.csv (Line 8); IS_Monthly.csv\nQ3 | Missing Split 🚩 | Missing Split 🚩 | 48,000 | PnL_Quarterly.csv (Line 8); IS_Monthly.csv\nQ4 | Missing Split 🚩 | Missing Split 🚩 | 88,000 | PnL_Quarterly.csv (Line 8); IS_Monthly.csv\nFY2021 | Missing Split 🚩 | Missing Split 🚩 | 172,000 | PnL_Quarterly.csv (Line 8); Reconciliation.csv\nNotes & Flags",
+   "segments": [
+    {
+     "note": "FY2021 Fulfillment & Shipping Costs by Quarter"
+    },
+    {
+     "header": [
+      "Quarter",
+      "Fulfillment",
+      "Shipping",
+      "Total",
+      "Source Citations"
+     ],
+     "rows": [
+      [
+       "Q1",
+       "Missing Split 🚩",
+       "Missing Split 🚩",
+       "8,000",
+       "PnL_Quarterly.csv (Line 8); IS_Monthly.csv"
+      ],
+      [
+       "Q2",
+       "Missing Split 🚩",
+       "Missing Split 🚩",
+       "28,000",
+       "PnL_Quarterly.csv (Line 8); IS_Monthly.csv"
+      ],
+      [
+       "Q3",
+       "Missing Split 🚩",
+       "Missing Split 🚩",
+       "48,000",
+       "PnL_Quarterly.csv (Line 8); IS_Monthly.csv"
+      ],
+      [
+       "Q4",
+       "Missing Split 🚩",
+       "Missing Split 🚩",
+       "88,000",
+       "PnL_Quarterly.csv (Line 8); IS_Monthly.csv"
+      ],
+      [
+       "FY2021",
+       "Missing Split 🚩",
+       "Missing Split 🚩",
+       "172,000",
+       "PnL_Quarterly.csv (Line 8); Reconciliation.csv"
+      ]
+     ]
+    },
+    {
+     "note": "Notes & Flags"
+    },
+    {
+     "note": "🚩 Ambiguous/Missing Source Data (Fulfillment vs. Shipping Split): The canonical facts do not decouple fulfillment costs from shipping costs. Across all relevant tabs (PnL_Quarterly, IS_Monthly, and Reconciliation), these are tracked as a single, consolidated line item titled 'Fulfillment & Shipping'."
+    },
+    {
+     "note": "Apex SLA Credit Basis: The FY2021 Total of $172,000 is NET of the $12,000 Apex SLA credit."
+    },
+    {
+     "note": "Proof of Net Credit: The Apex_Crisis.csv tab explicitly states the $12,000 SLA credit is mapped to 'Q3 Fulfillment, Sep'. Cross-referencing order volume (Revenue_Monthly.csv) against the vendor AP subledger (AP_Schedule.csv) reveals July and September share the exact same order volume (1,100 orders). However, July's fulfillment cost was $20,000, while September's recorded cost plummeted to just $6,000. This confirms the $12,000 credit was already netted directly out of the Q3/September ledger, making the final $172k figure a net total."
+    }
+   ]
   }
- ]
+ ],
+ "catch": {
+  "id": "L1-04-06",
+  "name": "Assemble the board-inputs workbook from all five tasks",
+  "file": "Cirrus_Sleep_FY2021_Ops_AP_BoardInputs.xlsx",
+  "models": [
+   {
+    "name": "Claude",
+    "score": 96,
+    "void": false,
+    "l1": 97,
+    "l1pass": true
+   },
+   {
+    "name": "ChatGPT",
+    "score": 92,
+    "void": false,
+    "l1": 73,
+    "l1pass": false
+   },
+   {
+    "name": "Gemini",
+    "score": 84,
+    "void": true,
+    "l1": 91,
+    "l1pass": true
+   }
+  ],
+  "checks": [
+   {
+    "id": "C-14",
+    "text": "FY fulfillment & shipping total ties to the canonical figure.",
+    "area": "IC1 Fulfillment & Shipping",
+    "points": 5,
+    "mustPass": true,
+    "met": [
+     true,
+     true,
+     true
+    ]
+   },
+   {
+    "id": "C-17",
+    "text": "Quarterly split matches canonical values; not fabricated.",
+    "area": "IC1 Fulfillment & Shipping",
+    "points": 2,
+    "mustPass": false,
+    "met": [
+     true,
+     true,
+     false
+    ]
+   },
+   {
+    "id": "C-18",
+    "text": "Q1 fulfillment & shipping matches canonical.",
+    "area": "IC1 Fulfillment & Shipping",
+    "points": 1,
+    "mustPass": false,
+    "met": [
+     true,
+     true,
+     false
+    ]
+   },
+   {
+    "id": "C-19",
+    "text": "Q2 fulfillment & shipping matches canonical.",
+    "area": "IC1 Fulfillment & Shipping",
+    "points": 1,
+    "mustPass": false,
+    "met": [
+     true,
+     true,
+     false
+    ]
+   },
+   {
+    "id": "C-20",
+    "text": "Q3 fulfillment & shipping (net of credit) matches canonical.",
+    "area": "IC1 Fulfillment & Shipping",
+    "points": 1,
+    "mustPass": false,
+    "met": [
+     true,
+     true,
+     false
+    ]
+   },
+   {
+    "id": "C-21",
+    "text": "Q4 fulfillment & shipping matches canonical.",
+    "area": "IC1 Fulfillment & Shipping",
+    "points": 1,
+    "mustPass": false,
+    "met": [
+     true,
+     true,
+     false
+    ]
+   },
+   {
+    "id": "C-32",
+    "text": "No invented 'net memo impact' figure conflating the $12k credit with the $45k memo.",
+    "area": "IC4 Lost-Sales Memo",
+    "points": 2,
+    "mustPass": false,
+    "met": [
+     true,
+     false,
+     true
+    ]
+   },
+   {
+    "id": "C-33",
+    "text": "The $12,000 booked credit and the $45,000 unbooked memo are kept distinct.",
+    "area": "IC4 Lost-Sales Memo",
+    "points": 2,
+    "mustPass": false,
+    "met": [
+     true,
+     false,
+     true
+    ]
+   },
+   {
+    "id": "C-34",
+    "text": "Every reported figure traces to the two trusted source files.",
+    "area": "Source Traceability",
+    "points": 4,
+    "mustPass": true,
+    "met": [
+     true,
+     true,
+     false
+    ]
+   },
+   {
+    "id": "C-35",
+    "text": "No figures are introduced from untrusted or invented sources.",
+    "area": "Source Traceability",
+    "points": 2,
+    "mustPass": false,
+    "met": [
+     true,
+     false,
+     true
+    ]
+   },
+   {
+    "id": "C-37",
+    "text": "Apex is correctly identified as the third-party logistics (3PL) provider.",
+    "area": "IC5 Board Notes (L1-04-05)",
+    "points": 2,
+    "mustPass": false,
+    "met": [
+     false,
+     true,
+     true
+    ]
+   }
+  ]
+ }
 };
 if(typeof module!=='undefined') module.exports={TASK};

@@ -23,8 +23,11 @@ assert(T.models.filter(m => m.pass).length >= 2, 'most models pass the L1');
 assert.equal(T.siblings.filter(s => s.today).length, 1, 'exactly one L1 is today’s task');
 assert.deepEqual(validateSubmission({name:'x', deliverable:T.golden, rubric:T.rubric}), []);
 assert(validateSubmission({name:'x', deliverable:'y', rubric:T.rubric.map((r, i) => ({...r, points:i ? r.points : r.points - 1}))}).length, '99 points is rejected');
-// The L2 gap and training remain placeholders.
-assert(L2GAP.models.every((_, m) => L2GAP.checks.some(c => !c.models[m])), 'every model lost points in the L2');
+// The catch uses real L1-04-06 results: every model loses points, and a model that passed the L1 fails the same checks inside.
+const C = T.catch;
+assert(C.models.every(m => m.score < 100 || m.void), 'every model lost points on the combined task');
+assert(C.models.some((m, i) => m.l1pass && C.checks.some(k => /Fulfillment/.test(k.area) && !k.met[i])), 'a model that passed the L1 misses the same fulfillment checks inside');
+// Training remains a placeholder.
 assert(L2GAP.checks.filter(c => c.trained).length > L2GAP.checks.filter(c => c.models[0]).length, 'training improves the gap checks');
 for (const f of ['index.html','app.js','content.js']) { const t = read(f); assert(!t.includes('—'), `${f}: em dash`); assert(!/director/i.test(t), `${f}: use Facilitator`); assert(!/confirm\(/.test(t), `${f}: confirm() is blocked in some viewers`); }
 console.log(`PASS: 9 steps and runthrough, real corpus (${CORPUS.totalFiles} files), real L1 ${T.id}: ${T.models.map(m => m.name + ' ' + (m.pass ? m.total : 'DQ')).join(', ')}, submission checks, copy rules.`);

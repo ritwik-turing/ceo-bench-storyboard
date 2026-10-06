@@ -6,7 +6,7 @@ const $ = s => document.querySelector(s);
 const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const KEY = 'ceo-bench-demo-v3', NOTES_KEY = 'ceo-bench-comments-v3';
 const T = TASK;
-const blank = () => ({step:1, model:1, src:'d2', file:0, revealed:false, openL2:false, gap:false, work:null, baseline:false, graded:false, trained:false, trainedRun:false});
+const blank = () => ({step:1, model:1, downloaded:false, src:'d2', file:0, revealed:false, openL2:false, gap:false, work:null, baseline:false, graded:false, trained:false, trainedRun:false});
 let S = blank();
 try { S = Object.assign(blank(), JSON.parse(localStorage.getItem(KEY))); } catch {}
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch {} };
@@ -25,6 +25,9 @@ const verdict = m => m.pass ? '<span class="tag good">Passes</span>' : `<span cl
 const KIND = {xlsx:'spreadsheets', docx:'documents', doc:'documents', pdf:'PDFs', pptx:'slide decks', csv:'data exports', json:'data exports', png:'images'};
 const kinds = k => Object.entries(Object.entries(k).reduce((a, [x, n]) => (a[KIND[x] || 'other files'] = (a[KIND[x] || 'other files'] || 0) + n, a), {})).map(([x, n]) => `${n} ${x}`).join(' · ');
 const gapScore = met => { const total = L2GAP.checks.reduce((n, c) => n + c.points, 0), earned = L2GAP.checks.reduce((n, c) => n + (met(c) ? c.points : 0), 0); return {total, earned, pct:Math.round(earned / total * 100)}; };
+const isNum = c => /^-?\$?[\d,]+(\.\d+)?$/.test(c);
+// Renders a sheet as notes and real tables. hl marks rows to highlight (e.g. the line the task is about).
+const segHTML = (segs, hl = /Fulfillment|SLA credit|FY Total|FY2021/i) => segs.map(s => s.note ? `<p class="seg-note">${esc(s.note)}</p>` : `<div class="tbl"><table class="data ${s.header.length <= 3 ? 'wrap' : ''}"><thead><tr>${s.header.map(h => `<th>${esc(h)}</th>`).join('')}</tr></thead><tbody>${s.rows.map(r => `<tr class="${hl.test(r[0]) ? 'hl' : ''}">${r.map(c => `<td class="${isNum(c) ? 'n' : ''}">${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`).join('');
 const screen = (title, body) => `<div class="screen"><div class="chrome"><i></i><i></i><i></i><b>${title}</b><span class="rec">Recorded run · replay</span></div><div class="screen-body">${body}</div></div>`;
 
 const views = {
@@ -42,15 +45,18 @@ const views = {
   <div class="pane"><h3>${esc(cur.name)}</h3>${pane}</div></div>`; },
 
  // 2 · L3 brief and the L3 → L2 → L1 breakdown
- 2: () => `<div class="tier l3"><div class="lvl">L3<small>~100h</small></div><div class="card dark"><span class="label">The executive job · abridged</span><h3 style="font-size:22px">${L3.name}</h3><div class="brief">${MANDATE.map((m, i) => `<button data-detail="mandate:${i}" title="${esc(m.detail)}"><span class="k">${m.label.replace('Your ', '')}</span><span class="v">${m.value}</span></button>`).join('')}</div></div></div>
-  <div class="tier l2 ${S.openL2 ? '' : 'last'}"><div class="lvl">L2<small>10–20h</small></div>${S.revealed ? `<div class="grid g5 reveal">${TASKS.map(([n, name, desc, pod]) => `<button class="card ${pod === TODAY ? 'hot' : ''}" ${pod === TODAY ? 'data-act="open-l2"' : `data-detail="task:${n}"`}><span class="label">${pod === TODAY ? 'Contains your task' : 'Done by experts'}</span><h3>${pod === TODAY ? 'Board model inputs: operations cost and AP' : name}</h3><p>${pod === TODAY ? 'L2-04 · fulfillment, payables, and the Apex incident' : desc}</p></button>`).join('')}</div>` : `<div><button class="primary big" data-act="reveal">Break it into 10 department tasks</button></div>`}</div>
-  ${S.openL2 ? `<div class="tier l1 last"><div class="lvl">L1<small>1–3h</small></div><div class="grid g3 reveal">${T.siblings.map((t, i) => `<button class="card ${t.today ? 'today' : ''}" data-detail="l1:${i}"><span class="label">${t.id} · ${t.today ? 'Your task today' : 'Done by experts'}</span><h3>${t.name}</h3></button>`).join('')}</div></div>` : (S.revealed ? '<p class="small" style="margin-left:72px">Open the highlighted department task to see the small tasks inside it.</p>' : '')}`,
+ 2: () => { const today = 'Board model inputs: operations cost and AP';
+  return `<div class="tier l3"><div class="lvl">L3<small>~100h</small></div><div class="card dark"><span class="label">The executive job · abridged</span><h3 style="font-size:22px">${L3.name}</h3><div class="brief">${MANDATE.map((m, i) => `<button data-detail="mandate:${i}" title="${esc(m.detail)}"><span class="k">${m.label.replace('Your ', '')}</span><span class="v">${m.value}</span></button>`).join('')}</div></div></div>
+  <div class="tier l2 ${S.openL2 ? '' : 'last'}"><div class="lvl">L2<small>10–20h</small></div>${S.revealed ? `<div><div class="grid g5 reveal">${[...TASKS].sort((a, b) => (b[3] === TODAY) - (a[3] === TODAY)).map(([n, name, desc, pod]) => pod === TODAY
+    ? `<button class="card l2-pick ${S.openL2 ? 'open' : ''}" data-act="open-l2"><span class="label">L2-04 · contains your task</span><h3>${today}</h3><p>Fulfillment, payables, and the Apex incident</p><span class="l2-count">${S.openL2 ? '6 L1 tasks shown below ▾' : 'Open to see its 6 L1 tasks ▸'}</span></button>`
+    : `<button class="card l2-other" data-detail="task:${n}"><span class="label">Done by experts</span><h3>${name}</h3><p>${desc}</p></button>`).join('')}</div>${S.openL2 ? '' : '<p class="small" style="margin-top:12px">Every department task has its own small L1 tasks. Open the highlighted one, L2-04, to see the six inside it.</p>'}</div>` : `<div><button class="primary big" data-act="reveal">Break it into 10 department tasks</button></div>`}</div>
+  ${S.openL2 ? `<div class="tier l1 last"><div class="lvl">L1<small>1–3h</small></div><div class="l1-panel reveal"><div class="l1-title">The 6 small tasks inside <b>L2-04 · ${today}</b></div><div class="l1-head"><span class="crumb">L3 · first external audit</span><span class="sep">›</span><span class="crumb on">L2-04 · ${today}</span><span class="sep">›</span><span class="crumb">6 L1 tasks</span></div><div class="grid g3">${T.siblings.map((t, i) => `<button class="card ${t.today ? 'today' : ''}" data-detail="l1:${i}"><span class="label">${t.id} · ${t.today ? 'Your task today' : 'Done by experts'}</span><h3>${t.name}</h3></button>`).join('')}</div></div></div>` : ''}`; },
 
  // 3 · Golden answer
  3: () => { const w = work();
   return `<div class="work"><div class="stack"><div class="task-card"><span class="label">Your task · ${T.id}</span><p><b>${T.question}</b></p><p style="margin-top:6px">${T.brief}</p><p class="small" style="margin-top:8px">${T.briefNote}</p></div>
-   ${T.files.map(f => `<div class="source"><h4><span class="ref">${f.ref}</span>${esc(f.name)}</h4><pre class="wide">${esc(f.body)}</pre></div>`).join('')}</div>
-   <div class="stack"><div><span class="label">Your golden answer</span><textarea data-f="deliverable" placeholder="Quarter totals, with the source tab for each. Before or after the $12,000 credit? What can’t the records split?" aria-label="Your golden answer">${esc(w.deliverable)}</textarea></div><div class="row"><button data-act="example">Fill in the expert’s answer</button><span class="small">Loads the real golden answer and rubric, for a quick run-through.</span></div></div></div>`; },
+   ${T.files.map(f => `<div class="source"><h4><span class="ref">${f.ref}</span>${esc(f.name)}<span class="path">${T.source} › ${f.tab}</span></h4>${segHTML(f.segments)}</div>`).join('')}</div>
+   <div class="stack">${w.example ? `<div class="expert"><div class="row between"><span class="label" style="margin:0">Expert’s golden answer · ${T.id}_Golden.xlsx</span><button data-act="own">Write my own instead</button></div>${segHTML(T.goldenSegments)}</div>` : `<div><span class="label">Your golden answer</span><textarea data-f="deliverable" placeholder="Quarter totals, with the source tab for each. Before or after the $12,000 credit? What can’t the records split?" aria-label="Your golden answer">${esc(w.deliverable)}</textarea></div><div class="row"><button data-act="example">Fill in the expert’s answer</button><span class="small">Loads the real golden answer and rubric, for a quick run-through.</span></div>`}</div></div>`; },
 
  // 4 · Rubric and submit
  4: () => { const w = work(), total = points(w.rubric), errors = validateSubmission({name:'Pod', deliverable:w.deliverable, rubric:w.rubric});
@@ -64,23 +70,33 @@ const views = {
   return `${real('Recorded results from the pilot runs, July 2026 · no model is called live')}
   <div class="models">${T.models.map((x, i) => `<button class="model ${i === S.model ? 'on' : ''} ${x.pass ? '' : 'fail'}" data-model="${i}">${ring(x.total, !x.pass)}<div><h3>${x.name}</h3>${verdict(x)}<p class="small" style="margin-top:6px">${x.pass ? `${x.total} of 100 points` : `Raw ${x.total}, but a must-pass check failed`}</p></div></button>`).join('')}</div>
   <div class="callout blue" style="margin-bottom:20px"><b>Two of three pass this short task.</b> ChatGPT got every number right but cited a spreadsheet tab that does not exist, so must-pass check O3 disqualifies it.</div>
-  <div class="work"><div class="stack"><div><span class="label">Output · ${m.name}’s answer (first rows)</span><pre class="wide">${esc(m.answer)}</pre></div><button data-act="rerun-baseline" style="align-self:flex-start">Replay ${m.name}’s run</button></div>
+  <div class="work"><div class="stack"><div><span class="label">Output · ${m.name}’s answer</span><div class="answer">${segHTML(m.segments)}</div></div><button data-act="rerun-baseline" style="align-self:flex-start">Replay ${m.name}’s run</button></div>
   <div class="table-card"><div class="scroll"><table id="grades"><thead><tr><th>Rubric check · ${m.name}</th><th class="n">Score</th></tr></thead><tbody>${T.rubric.map((r, i) => `<tr class="grade-row" data-row="${i}"><td><button class="linkish" data-detail="crit:${i}">${r.id} · ${esc(r.text)}</button> ${r.mustPass ? '<span class="tag bad">Must-pass</span>' : ''}</td><td class="n g">${S.graded ? pts(m, i) : '<span class="small">…</span>'}</td></tr>`).join('')}</tbody></table></div><div class="submitbar" id="grade-total">${S.graded ? gradeTotal() : '<button class="primary" data-act="grade">Grade with the rubric</button>'}</div></div></div>`; },
 
- // 6 · The catch
- 6: () => `${sim('Placeholder checks and anonymous results until the real L2-04 results are added')}
-  <div class="gap-head"><div class="card"><span class="label">L1 · your task</span><h3>${T.name}</h3><p>1–3 hours · ${T.models.map(m => `${m.name} ${m.pass ? m.total : 'disqualified'}`).join(' · ')}</p></div><div class="arrow">→</div><div class="card dark"><span class="label">L2 · the department task that contains it · ${L2GAP.hours}</span><h3>${L2GAP.name}</h3><p>All six small tasks combined, over a full year of records.</p></div></div>
-  ${S.gap ? `<div class="table-card reveal"><div class="scroll"><table><thead><tr><th>The same judgment, inside the L2 task</th><th class="n">Pts</th>${L2GAP.models.map(m => `<th class="c">${m}</th>`).join('')}</tr></thead><tbody>${L2GAP.checks.map(c => `<tr><td>${esc(c.text)} ${c.mustPass ? '<span class="tag bad">Must-pass</span>' : ''}</td><td class="n">${c.points}</td>${c.models.map(ok => `<td class="c">${mark(ok)}</td>`).join('')}</tr>`).join('')}</tbody></table></div></div><div class="callout" style="margin-top:18px">Every model lost points on the judgment you just made in about 40 minutes. <b>Short tasks are easy. Long, real work is where models break.</b></div>` : '<button class="primary big" data-act="gap">Show how models did inside the L2 task</button>'}`,
+ // 6 · The catch: the same judgment inside the combined task (real L1-04-06 results)
+ 6: () => { const c = T.catch, chip = m => m.void ? `<span class="tag bad">${m.name} · voided</span>` : `<span class="tag ${m.score >= 90 ? 'good' : ''}">${m.name} · ${m.score}</span>`;
+  return `${real('Recorded results from the pilot runs, July 2026')}
+  <div class="gap-head"><div class="card"><span class="label">On its own · ${T.id}</span><h3>${T.name}</h3><p>1–3 hours</p><div class="row" style="margin-top:12px">${T.models.map(m => m.pass ? `<span class="tag good">${m.name} · ${m.total}</span>` : `<span class="tag bad">${m.name} · disqualified</span>`).join('')}</div></div><div class="arrow">→</div>
+  <div class="card dark"><span class="label">Inside the bigger job · ${c.id}</span><h3>${c.name}</h3><p>All five small tasks combined into one board-inputs workbook, with the same quarterly numbers inside.</p><div class="row" style="margin-top:12px">${c.models.map(chip).join('')}</div></div></div>
+  ${S.gap ? `<div class="table-card reveal"><div class="scroll"><table><thead><tr><th>Check inside the combined task</th><th class="n">Pts</th>${c.models.map(m => `<th class="c">${m.name}</th>`).join('')}</tr></thead><tbody>${c.checks.map(k => `<tr class="${/Fulfillment/.test(k.area) ? 'same' : ''}"><td>${k.id} · ${esc(k.text)} ${k.mustPass ? '<span class="tag bad">Must-pass</span>' : ''}<div class="small">${esc(k.area)}</div></td><td class="n">${k.points}</td>${k.met.map(ok => `<td class="c">${mark(ok)}</td>`).join('')}</tr>`).join('')}</tbody></table></div></div>
+  <div class="callout" style="margin-top:18px"><b>Gemini got the quarterly numbers right on their own (91/100). Inside the combined task, it got those same numbers wrong and could not trace its sources, so it was voided.</b> Every model lost points once the job got longer.</div>` : '<button class="primary big" data-act="gap">Show what happened inside the bigger job</button>'}`; },
 
- // 7 · Reinforcement learning
- 7: () => `${sim('Recorded training curve · values are illustrative')}<div class="work"><div class="stack"><div class="card"><span class="label">Training data</span><h3>What the model learns from</h3><p style="margin-bottom:12px">Every attempt on the long task, graded check by check by the rubric.</p><div class="row">${[['traces', 'Graded attempts'], ['golden', 'Expert golden answers'], ['rubric', 'Rubrics as the reward']].map(([k, l]) => `<button data-detail="train:${k}">${l}</button>`).join('')}</div></div><button class="primary big" data-act="train" style="align-self:flex-start">${S.trained ? '↻ Replay training run' : '▶ Start training run'}</button></div>
-  <div class="curve-card"><div class="row between"><span class="label" style="margin:0">Score on the gap checks</span><span class="small" id="train-status">${S.trained ? 'Training complete · checkpoint saved' : 'Not started'}</span></div><svg class="curve" viewBox="0 0 100 100" preserveAspectRatio="none" aria-label="Score during training">${[25, 50, 75].map(y => `<line x1="0" x2="100" y1="${y}" y2="${y}"/>`).join('')}<polygon id="area" points="${S.trained ? area(curvePoints(60)) : ''}"/><polyline id="curve" points="${S.trained ? curvePoints(60) : ''}"/></svg><div class="row between small"><span>Start</span><span>Training steps →</span></div></div></div>`,
+ // 7 · Download the expert-curated dataset, then train on it
+ 7: () => { const rows = datasetParts();
+  return `${sim('The dataset is real pilot data · the training run and reward values are illustrative')}
+  <div class="work"><div class="stack"><div class="card"><span class="label">1 · The expert-curated dataset</span><h3>Everything the experts produced for this task</h3><p style="margin-bottom:12px">Packaged the way an AI lab receives it. Download it before training starts.</p>
+   <table class="ds"><thead><tr><th>Expert input</th><th class="n">Size</th><th>Used in training as</th></tr></thead><tbody>${rows.map(r => `<tr><td><b>${r.name}</b></td><td class="n">${r.size}</td><td><span class="dim">${r.use}</span></td></tr>`).join('')}</tbody></table>
+   <div class="row" style="margin-top:14px"><button class="primary" data-act="download-json">⤓ Download dataset (JSON)</button><button data-act="download-csv">⤓ Rubric and grades (CSV)</button><button data-detail="dataset:">Preview</button></div>
+   <p class="small" style="margin-top:8px">${S.downloaded ? '<span class="good">✓ Dataset downloaded.</span> ' : ''}File: ${datasetName()}.json</p></div>
+   <div class="card"><span class="label">2 · Train on it</span><p style="margin-bottom:12px">Every input above is a dimension of the training signal. Nothing the experts wrote is left out.</p><button class="primary big" data-act="train">${S.trained ? '↻ Train again' : '▶ Train on the expert dataset'}</button></div></div>
+  <div class="stack"><div class="curve-card"><div class="row between"><span class="label" style="margin:0">Reward on the long task</span><span class="small" id="train-status">${S.trained ? 'Training complete · checkpoint saved' : 'Not started'}</span></div><svg class="curve" viewBox="0 0 100 100" preserveAspectRatio="none" aria-label="Reward during training">${[25, 50, 75].map(y => `<line x1="0" x2="100" y1="${y}" y2="${y}"/>`).join('')}<polygon id="area" points="${S.trained ? area(curvePoints(60)) : ''}"/><polyline id="curve" points="${S.trained ? curvePoints(60) : ''}"/></svg><div class="row between small"><span>Start</span><span>Training steps →</span></div></div>
+   <div class="card"><span class="label">The training signal</span><div class="signals ${S.trained ? 'on' : ''}" id="signals">${rows.map(r => `<div class="signal"><span class="pip"></span><div><b>${r.short}</b><div class="small">${r.use}</div></div></div>`).join('')}</div></div></div></div>`; },
 
  // 8 · After training: trained run and re-evaluation
  8: () => { if (!S.trained) return `<div class="launch"><h3>Train the model first.</h3><button data-go="7" class="primary">Go to training</button></div>`;
   const a = gapScore(c => c.models[0]), b = gapScore(c => c.trained);
-  return `${sim('Pre-built checkpoint, recorded replay, illustrative scores')}<div class="work"><div class="stack"><div><span class="label">Model A on the L2 task · before training</span><pre>${esc(L2GAP.before)}</pre></div>${S.trainedRun ? `<div><span class="label">Model A on the L2 task · after training</span><pre>${esc(L2GAP.after)}</pre></div><button data-act="rerun-trained" style="align-self:flex-start">Replay the trained run</button>` : '<div id="stage" class="launch"><h3>Same agent, after training, on the long task.</h3><button class="primary big" data-act="run-trained">▶ Run the trained agent</button></div>'}</div>
-  ${S.trainedRun ? `<div class="stack"><div class="card hot"><span class="label">Gap checks · Model A</span><div class="big-stat">${b.earned}<small>/${b.total}</small></div><p style="margin-top:6px">Up from ${a.earned} before training.</p><div class="bars" style="margin-top:16px"><div class="bar"><span>Before</span><div class="track"><span class="before" style="width:${a.pct}%"></span></div><span>${a.earned}/${a.total}</span></div><div class="bar"><span>After</span><div class="track"><span class="after" style="width:${b.pct}%"></span></div><span>${b.earned}/${b.total}</span></div></div></div>
+  return `${sim('Pre-built checkpoint, recorded replay, illustrative scores')}<div class="work"><div class="stack"><div><span class="label">The agent on the long task · before training</span><pre>${esc(L2GAP.before)}</pre></div>${S.trainedRun ? `<div><span class="label">The agent on the long task · after training</span><pre>${esc(L2GAP.after)}</pre></div><button data-act="rerun-trained" style="align-self:flex-start">Replay the trained run</button>` : '<div id="stage" class="launch"><h3>Same agent, after training, on the long task.</h3><button class="primary big" data-act="run-trained">▶ Run the trained agent</button></div>'}</div>
+  ${S.trainedRun ? `<div class="stack"><div class="card hot"><span class="label">Gap checks · illustrative</span><div class="big-stat">${b.earned}<small>/${b.total}</small></div><p style="margin-top:6px">Up from ${a.earned} before training.</p><div class="bars" style="margin-top:16px"><div class="bar"><span>Before</span><div class="track"><span class="before" style="width:${a.pct}%"></span></div><span>${a.earned}/${a.total}</span></div><div class="bar"><span>After</span><div class="track"><span class="after" style="width:${b.pct}%"></span></div><span>${b.earned}/${b.total}</span></div></div></div>
    <div class="table-card"><table><thead><tr><th>Check</th><th class="c">Before</th><th class="c">After</th></tr></thead><tbody>${L2GAP.checks.map(c => `<tr><td>${esc(c.text)}</td><td class="c">${mark(c.models[0])}</td><td class="c">${mark(c.trained)}</td></tr>`).join('')}</tbody></table></div></div>` : '<div></div>'}</div>`; },
 
  // 9 · Recap
@@ -88,19 +104,42 @@ const views = {
 };
 
 const meter = total => `<span>${total} of 100 points</span><div class="track"><span class="${total === 100 ? 'after' : 'before'}" style="width:${Math.min(100, total)}%;animation:none"></span></div><b class="${total === 100 ? 'good' : 'bad'}">${total === 100 ? 'Ready' : `${100 - total > 0 ? 100 - total + ' to go' : total - 100 + ' over'}`}</b>`;
+const datasetName = () => `cirrus-sleep_${T.id.toLowerCase()}_expert-dataset`;
+const datasetParts = () => { const w = work(), gates = T.rubric.filter(r => r.mustPass).length, goldRows = T.goldenSegments.reduce((n, s) => n + (s.rows ? s.rows.length : 0), 0);
+ return [
+  {name:'Task prompt and source files', short:'Environment', size:`1 prompt · ${T.files.length} tabs`, use:'The environment: what the model reads and works from'},
+  {name:'Golden answer', short:'Golden answer', size:`${goldRows} rows`, use:'What good looks like: the reference every attempt is judged against'},
+  {name:'Rubric criteria and weights', short:'Reward', size:`${T.rubric.length} checks · 100 pts`, use:'The reward: points earned on each check'},
+  {name:'Must-pass gates', short:'Hard limits', size:`${gates} gates`, use:'Hard limits: missing one zeroes the reward'},
+  {name:'Graded attempts', short:'Training examples', size:`${T.models.length} runs · ${T.models.length * T.rubric.length} grades`, use:'Training examples: attempts paired with their check-by-check grades'},
+  {name:'Grader notes', short:'Feedback', size:`${T.rubric.filter(r => r.note).length} notes`, use:'Feedback: why each check was met or missed'},
+  ...(w.submitted && !w.example ? [{name:'Your pod’s golden answer and rubric', short:'Your expertise', size:`${w.rubric.length} checks`, use:'More expert data, added to the set'}] : [])]; };
+function dataset() { const w = work();
+ return {dataset:datasetName(), description:'Expert-curated training data for one CEO Bench L1 task (Cirrus Sleep, FY2021). Recorded pilot data; the reward definition is illustrative.',
+  task:{id:T.id, name:T.name, level:'L1', parent:'L2-04 FY2021 board model inputs', question:T.question, prompt:T.brief, prompt_note:T.briefNote},
+  environment:{source_file:T.source, tabs:T.files.map(f => ({ref:f.ref, tab:f.tab, segments:f.segments}))},
+  golden_answer:{file:`${T.id}_Golden.xlsx`, segments:T.goldenSegments},
+  rubric:T.rubric.map(r => ({id:r.id, criterion:r.text, expected:r.expected, points:r.points, must_pass:r.mustPass, grader_note:r.note})),
+  reward:{definition:'Sum of rubric points earned, scaled to 0–1; 0 if any must-pass check fails.', illustrative:true},
+  graded_attempts:T.models.map(m => ({model:m.name, run_date:'2026-07-09', scores:Object.fromEntries(T.rubric.map((r, i) => [r.id, m.scores[i]])), total:m.total, must_pass_failed:m.failed, reward:m.pass ? m.total / 100 : 0})),
+  pod_contribution:w.submitted && !w.example ? {golden_answer:w.deliverable, rubric:w.rubric} : null}; }
+function saveFile(name, text, type) { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], {type})); a.download = name; document.body.append(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 0); }
+const csvCell = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
+const rubricCSV = () => [['id', 'criterion', 'expected', 'points', 'must_pass', ...T.models.map(m => m.name)], ...T.rubric.map((r, i) => [r.id, r.text, r.expected, r.points, r.mustPass ? 'yes' : 'no', ...T.models.map(m => m.scores[i])])].map(row => row.map(csvCell).join(',')).join('\n');
 const gradeTotal = () => { const m = M(); return `<b>${m.name}: ${m.total}/100</b><span>${m.pass ? '<span class="good">Every must-pass check met, so the attempt passes.</span>' : `<span class="bad">Must-pass ${m.failed.join(', ')} failed, so the attempt is disqualified.</span>`}</span>`; };
 const rubricTable = rows => `<table><tbody>${rows.map(r => `<tr><td>${esc(r.text)} ${r.mustPass ? '<span class="tag bad">Must-pass</span>' : ''}</td><td class="n">${r.points}</td></tr>`).join('')}</tbody></table>`;
 // Detail panel content for clickable items. key is "kind:id".
 function detail(key) {
  const [kind, id] = [key.slice(0, key.indexOf(':')), key.slice(key.indexOf(':') + 1)], w = work();
+ if (kind === 'dataset') { const text = JSON.stringify(dataset(), null, 2); return [`${datasetName()}.json`, `<p style="margin-bottom:10px">${(text.length / 1024).toFixed(1)} KB · the first lines are shown below.</p><pre class="wide" style="max-height:420px;overflow:auto">${esc(text.slice(0, 4000))}\n…</pre>`]; }
  if (kind === 'mandate') { const m = MANDATE[+id]; return [`${m.label}: ${m.value}`, `<p>${esc(m.detail)}</p>`]; }
  if (kind === 'help') return HELP[id];
  if (kind === 'task') { const [n, name, desc] = TASKS.find(t => t[0] === id); return [`L2 task · ${name}`, `<p>${desc}</p><p style="margin-top:10px">A standalone 10–20 hour department task with its own prompt, golden answer, and rubric. Experts have already completed it.</p>`]; }
  if (kind === 'l1') { const t = T.siblings[+id]; return [`${t.id} · ${t.name}`, t.today ? `<p><b>Your task today.</b> ${T.brief}</p>` : '<p>A 1–3 hour itemized task inside L2-04, with its own prompt, golden answer, rubric, and three recorded model runs. Experts have already completed it.</p>']; }
- if (kind === 'sub') return [`Submitted task · ${T.name}`, `<span class="label">Golden answer${w.example ? ' · expert’s answer' : ''}</span><pre class="wide">${esc(w.deliverable)}</pre><br><span class="label">Rubric · ${w.rubric.length} criteria</span>${rubricTable(w.rubric)}`];
+ if (kind === 'sub') return [`Submitted task · ${T.name}`, `<span class="label">Golden answer${w.example ? ' · expert’s answer' : ''}</span>${w.example ? segHTML(T.goldenSegments) : `<pre>${esc(w.deliverable)}</pre>`}<br><span class="label">Rubric · ${w.rubric.length} criteria</span>${rubricTable(w.rubric)}`];
  if (kind === 'crit') { const r = T.rubric[+id]; return [`${r.id} · ${r.text}`, `<p>${r.points} points${r.mustPass ? ' · <span class="tag bad">Must-pass</span>' : ''}</p><p style="margin-top:10px"><b>Expected:</b> ${esc(r.expected)}</p><table style="margin-top:12px"><tbody>${T.models.map(m => `<tr><td>${m.name}</td><td class="n">${pts(m, +id)}</td></tr>`).join('')}</tbody></table>${r.note ? `<p class="small" style="margin-top:10px">Grader’s note: ${esc(r.note)}</p>` : ''}`]; }
  if (id === 'traces') return ['Graded attempts', '<p>Each time the agent tries the department-level task, the rubric grades its answer check by check. The prompt, the answer, and those grades form one training example. Reinforcement learning uses thousands of them, with no human grading in the loop.</p>'];
- if (id === 'golden') return ['Expert golden answers', `<p style="margin-bottom:10px">Every task carries an expert’s correct answer. Yours is one of them:</p><pre class="wide">${esc(w.deliverable || T.golden)}</pre>`];
+ if (id === 'golden') return ['Expert golden answers', `<p style="margin-bottom:10px">Every task carries an expert’s correct answer. This is the one for ${T.id}:</p>${segHTML(T.goldenSegments)}`];
  return ['Rubrics, used as the reward', `<p style="margin-bottom:10px">Each attempt is graded with a rubric like this one. The points earned are the reward the model learns to maximize.</p>${rubricTable(w.submitted ? w.rubric : T.rubric)}`];
 }
 
@@ -113,7 +152,7 @@ const area = pts => pts ? `${pts} ${pts.split(' ').pop().split(',')[0]},100 0,10
 function train() {
  const id = ++runId; let n = 0; S.trained = false;
  (function step() { if (id !== runId || !$('#curve')) return; n += 1; const p = curvePoints(n); $('#curve').setAttribute('points', p); $('#area').setAttribute('points', area(p)); $('#train-status').textContent = `Training step ${fmt(n * 50)} of 3,000`;
-  if (n < 60) return setTimeout(step, 150); S.trained = true; S.trainedRun = false; save(); render(); })();
+  $('#signals')?.classList.add('on'); if (n < 60) return setTimeout(step, 150); S.trained = true; S.trainedRun = false; save(); render(); })();
 }
 // Fills in the score column one check at a time.
 function grade() {
@@ -189,9 +228,12 @@ document.addEventListener('click', e => {
  else if (d.act === 'open-l2') S.openL2 = true;
  else if (d.act === 'add') w.rubric.push({text:'', points:'', mustPass:false});
  else if (d.act === 'del') w.rubric.splice(+d.i, 1);
+ else if (d.act === 'own') Object.assign(w, {deliverable:'', example:false, submitted:false});
  else if (d.act === 'example') Object.assign(w, {deliverable:T.golden, rubric:T.rubric.map(r => ({text:r.text, points:r.points, mustPass:r.mustPass})), example:true, submitted:false});
  else if (d.act === 'submit') w.submitted = true;
  else if (d.act === 'grade') return grade();
+ else if (d.act === 'download-json') { saveFile(`${datasetName()}.json`, JSON.stringify(dataset(), null, 2), 'application/json'); S.downloaded = true; }
+ else if (d.act === 'download-csv') { saveFile(`${datasetName()}_rubric-grades.csv`, rubricCSV(), 'text/csv'); S.downloaded = true; }
  else if (d.act === 'gap') S.gap = true;
  else if (d.act === 'train') { save(); render(); return train(); }
  else if (d.act === 'run-baseline') return replay(false);
@@ -225,8 +267,8 @@ const DEMO = [
  {say:'Write the golden answer from the source tabs', run:async d => { await d.click('[data-act="example"]', 3200); }},
  {say:'Write the rubric, then submit the task', run:async d => { await d.wait(2200); await d.click('[data-act="submit"]', 2200); }},
  {say:'Three AI models try your task: two pass, one is disqualified', run:async d => { await d.click('[data-act="run-baseline"]'); await d.until(() => S.baseline); await d.wait(1600); await d.click('[data-act="grade"]'); await d.until(() => S.graded); await d.wait(1600); await d.click('[data-model="0"]', 2600); }},
- {say:'The catch: the same judgment inside a long task', run:async d => { await d.wait(1500); await d.click('[data-act="gap"]', 4500); }},
- {say:'Reinforcement learning on the long task', run:async d => { await d.click('[data-act="train"]'); await d.until(() => S.trained); await d.wait(1500); }},
+ {say:'The catch: the same numbers inside a bigger job', run:async d => { await d.wait(1500); await d.click('[data-act="gap"]', 4500); }},
+ {say:'Download the expert data, then train on all of it', run:async d => { await d.wait(1500); await d.click('[data-detail="dataset:"]', 3200); await d.click('[data-act="close-detail"]', 500); await d.click('[data-act="train"]'); await d.until(() => S.trained); await d.wait(1500); }},
  {say:'After training: the long task, graded again', run:async d => { await d.click('[data-act="run-trained"]'); await d.until(() => S.trainedRun); await d.wait(4000); }},
  {say:'Recap: create, evaluate, find the gap, train, evaluate again', run:async d => { await d.wait(5000); }}
 ];

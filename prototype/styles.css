@@ -237,3 +237,39 @@ dialog h2{font-size:22px}#detail-body{margin-top:14px;font-size:14px}
 .rubric td:nth-child(3){width:96px}
 @media(max-width:900px){header{grid-template-columns:minmax(0,1fr) auto;gap:10px}.logo{width:110px}.tools #reset,.tools #notes-btn{display:none}#steps{overflow-x:auto;justify-content:flex-start;padding-bottom:4px}#steps button{flex:0 0 40px}#demo-bar{bottom:70px}}
 @media(max-width:900px){#where{display:none}footer{grid-template-columns:auto auto;justify-content:space-between}footer button{white-space:nowrap}}
+
+/* Real tables for spreadsheet excerpts */
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:#fff;margin-bottom:10px}
+table.data{font-size:12px}
+table.data th{position:static;background:var(--soft);white-space:nowrap;font-size:10.5px}
+table.data td{padding:8px 10px;white-space:nowrap;max-width:340px;overflow:hidden;text-overflow:ellipsis}
+table.data td:first-child{font-weight:600;color:var(--ink)}
+table.data tr.hl td{background:#fff8e1}
+.seg-note{font-size:12.5px;color:var(--ink2);margin:0 0 8px;line-height:1.55}
+.source h4 .path{margin-left:auto;font-weight:400}
+.expert{border:1px solid var(--pale2);background:linear-gradient(180deg,#f3f8ff,#fff);border-radius:var(--radius);padding:16px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.answer{max-height:520px;overflow:auto}
+/* Screen 2: L2 to L1 mapping */
+.l2-pick{border:2px solid var(--bright)!important;background:linear-gradient(180deg,#eef5ff,#fff)!important}
+.l2-pick.open{box-shadow:0 0 0 4px #317eff2b,var(--shadow-lift)!important}
+.l2-count{display:block;margin-top:10px;font-size:11.5px;font-weight:600;color:var(--blue)}
+.l2-other{opacity:.72}.l2-other:hover{opacity:1}
+.l1-panel{border:2px solid var(--bright);border-radius:16px;padding:16px;background:linear-gradient(180deg,#f3f8ff,#fff);position:relative}
+.l1-head{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:14px;font-size:12px}
+.crumb{padding:4px 10px;border-radius:999px;background:#fff;border:1px solid var(--line);color:var(--muted)}
+.crumb.on{background:var(--blue);border-color:var(--blue);color:#fff}
+.sep{color:var(--faint)}
+tr.same td{background:#fff8e1}
+.l1-title{font-size:16px;margin-bottom:8px}.l1-title b{font-weight:600;color:var(--blue)}
+table.data.wrap td{white-space:normal;max-width:none}
+
+/* Step 7: dataset and training signal */
+table.ds th{position:static}
+table.ds td{padding:9px 10px;font-size:12.5px}
+.dim{display:inline-block;color:var(--blue)}
+.signals{display:flex;flex-direction:column;gap:10px;margin-top:4px}
+.signal{display:grid;grid-template-columns:14px minmax(0,1fr);gap:10px;align-items:start;font-size:13px}
+.signal b{font-weight:600}
+.pip{width:10px;height:10px;border-radius:50%;background:var(--line2);margin-top:5px;transition:background .3s,box-shadow .3s}
+.signals.on .pip{background:var(--bright);box-shadow:0 0 0 4px #317eff2b}
+.signals.on .signal:nth-child(2) .pip{transition-delay:.15s}.signals.on .signal:nth-child(3) .pip{transition-delay:.3s}.signals.on .signal:nth-child(4) .pip{transition-delay:.45s}.signals.on .signal:nth-child(5) .pip{transition-delay:.6s}.signals.on .signal:nth-child(6) .pip{transition-delay:.75s}.signals.on .signal:nth-child(7) .pip{transition-delay:.9s}
