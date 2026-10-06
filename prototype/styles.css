@@ -273,3 +273,12 @@ table.ds td{padding:9px 10px;font-size:12.5px}
 .pip{width:10px;height:10px;border-radius:50%;background:var(--line2);margin-top:5px;transition:background .3s,box-shadow .3s}
 .signals.on .pip{background:var(--bright);box-shadow:0 0 0 4px #317eff2b}
 .signals.on .signal:nth-child(2) .pip{transition-delay:.15s}.signals.on .signal:nth-child(3) .pip{transition-delay:.3s}.signals.on .signal:nth-child(4) .pip{transition-delay:.45s}.signals.on .signal:nth-child(5) .pip{transition-delay:.6s}.signals.on .signal:nth-child(6) .pip{transition-delay:.75s}.signals.on .signal:nth-child(7) .pip{transition-delay:.9s}
+
+/* L2-04 → its L1 tasks: a solid line from the card into a border that wraps the six L1 tasks */
+.tier.l2.linked{margin-bottom:0}
+.l2-pick.open{position:relative;z-index:2}
+.l2-pick.open::after{content:"";position:absolute;left:50%;top:calc(100% + 2px);width:4px;height:42px;margin-left:-2px;background:var(--bright);border-radius:2px}
+.tier.l1 .l1-panel{margin-top:44px;border-width:3px}
+.tier.l1 .lvl{margin-top:44px}
+.tier.l2.linked::before{bottom:-44px}
+@media(max-width:900px){.l2-pick.open::after{display:none}.tier.l1 .l1-panel,.tier.l1 .lvl{margin-top:0}}
