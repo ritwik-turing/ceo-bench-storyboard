@@ -64,10 +64,10 @@ const STEPS = [
   "act": "Train the agent",
   "time": "60:00–63:00",
   "title": "Reinforcement learning: train on the expert data",
-  "sub": "Download the expert-curated dataset, then train. Every expert input is part of the training signal.",
-  "say": "Before training starts, here is everything the experts produced, packaged the way an AI lab receives it: the task and its source files, the golden answer, the rubric with its weights and must-pass gates, every graded attempt, and the grader notes. A lab can download it right here. Each of these is a dimension of training. The files are the environment, the golden answer shows what good looks like, the rubric is the reward, the must-pass checks are hard limits, and the graded attempts are the examples the model learns from.",
-  "cue": "Open Preview or download the dataset, and read the “Used in training as” column. Then press Train on the expert dataset and watch the training signals light up.",
-  "disclose": "The dataset contents are real L1-04-01 pilot data. The reward definition (rubric score, zero if a must-pass check fails) and the training run are illustrative. Note: the download includes the golden answer and rubric, which Jeff’s ground rules keep on screen only for journalists.",
+  "sub": "Preview the expert-curated dataset, then train. Every expert input is part of the training signal.",
+  "say": "Before training starts, here is everything the experts produced, packaged the way an AI lab receives it: the task and its source files, the golden answer, the rubric with its weights and must-pass gates, every graded attempt, and the grader notes. AI labs receive the full set; here you can preview a few rows. Each of these is a dimension of training. The files are the environment, the golden answer shows what good looks like, the rubric is the reward, the must-pass checks are hard limits, and the graded attempts are the examples the model learns from.",
+  "cue": "Open Preview the dataset and read a few rows. Then read the “Used in training as” column and press Train on the expert dataset.",
+  "disclose": "The dataset contents are real L1-04-01 pilot data. Journalists see a preview only; nothing is downloadable. The reward definition and the training run are illustrative.",
   "short": "Training"
  },
  {
