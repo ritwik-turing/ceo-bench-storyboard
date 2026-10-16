@@ -155,6 +155,11 @@ function expertScore(pod,trained){
 const TODAY = 'A';
 const L3 = {name:'Prepare Cirrus Sleep for its first external audit', role:'Controller', hours:'~100 hours'};
 const L1S = {A:[{name:'Reconcile June cash: bank statement against the books', today:true}, {name:'Age the open receivables at month end'}, {name:'Log payment exceptions with an owner for each'}]};
+/* How each pilot run is labelled: model (effort) with harness. null = not yet confirmed with Jeff, shown as "to confirm". */
+const MODEL_CONFIG = {
+ Claude:{model:'Claude Opus 5.5', effort:'xhigh', harness:'Claude Code'},
+ ChatGPT:{model:'GPT-5.6 Sol', effort:null, harness:'ChatGPT'},
+ Gemini:{model:null, effort:null, harness:'Gemini CLI'}};
 /* Step 10 kicker: the parent L2 task contains the same judgment. Placeholder checks and anonymous model results until Jeff supplies real per-criterion results. */
 const L2GAP = {name:'Board model inputs: operations cost and AP', hours:'10–20 hours', models:['Model A', 'Model B', 'Model C', 'Model D'],
  checks:[
@@ -164,4 +169,4 @@ const L2GAP = {name:'Board model inputs: operations cost and AP', hours:'10–20
   {text:'Ties ending accounts payable to $58,844 with a $0 variance', points:10, mustPass:false, models:[true, false, false, false], trained:false}],
  before:'FY2021 board model inputs. Fulfillment and shipping: $184,000 for the year (Apex credit applied separately in the AP schedule). Sources: P&L Monthly, Operations Fulfillment tab. Apex incident: $45,000 lost revenue recorded against Q3. Ending AP: $58,844.',
  after:'FY2021 board model inputs. Fulfillment and shipping: $172,000 for the year, net of the $12,000 Apex credit booked in September (IS_Monthly, PnL_Quarterly, Apex_Crisis). Apex incident: ~$45,000 lost sales held as a memo, not booked. Ending AP: $58,844; reconciliation variance still being traced.'};
-if(typeof module!=='undefined') module.exports={L2GAP,TODAY,L3,L1S,SEATS,TASKS,DEPARTMENTS,EXTRA_FILES,TRAINED,validateSubmission,scoreRubric,expertScore};
+if(typeof module!=='undefined') module.exports={MODEL_CONFIG,L2GAP,TODAY,L3,L1S,SEATS,TASKS,DEPARTMENTS,EXTRA_FILES,TRAINED,validateSubmission,scoreRubric,expertScore};

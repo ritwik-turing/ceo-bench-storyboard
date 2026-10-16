@@ -282,3 +282,7 @@ table.ds td{padding:9px 10px;font-size:12.5px}
 .tier.l1 .lvl{margin-top:44px}
 .tier.l2.linked::before{bottom:-44px}
 @media(max-width:900px){.l2-pick.open::after{display:none}.tier.l1 .l1-panel,.tier.l1 .lvl{margin-top:0}}
+.cfg{display:block;font-size:11px;font-weight:400;color:var(--muted);letter-spacing:0;text-transform:none;margin-top:2px;line-height:1.35}
+th .cfg{white-space:normal}
+.model h3 .cfg{font-size:12px}
+th.c{text-transform:none;letter-spacing:0;font-size:12px;color:var(--ink)}

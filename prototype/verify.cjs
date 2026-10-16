@@ -3,7 +3,7 @@ const fs = require('node:fs'), path = require('node:path'), assert = require('no
 const read = f => fs.readFileSync(path.join(__dirname, f), 'utf8');
 const { STEPS, MANDATE } = require('./content.js');
 const { CORPUS } = require('./corpus.js');
-const { L2GAP, validateSubmission } = require('./data.js');
+const { MODEL_CONFIG, L2GAP, validateSubmission } = require('./data.js');
 const { TASK } = require('./l1.js');
 const app = read('app.js');
 assert.equal(STEPS.length, 9);
@@ -27,6 +27,7 @@ assert(validateSubmission({name:'x', deliverable:'y', rubric:T.rubric.map((r, i)
 const C = T.catch;
 assert(C.models.every(m => m.score < 100 || m.void), 'every model lost points on the combined task');
 assert(C.models.some((m, i) => m.l1pass && C.checks.some(k => /Fulfillment/.test(k.area) && !k.met[i])), 'a model that passed the L1 misses the same fulfillment checks inside');
+for (const m of T.models) assert(MODEL_CONFIG[m.name]?.harness, `${m.name}: harness label`);
 // Training remains a placeholder.
 assert(L2GAP.checks.filter(c => c.trained).length > L2GAP.checks.filter(c => c.models[0]).length, 'training improves the gap checks');
 for (const f of ['index.html','app.js','content.js']) { const t = read(f); assert(!t.includes('—'), `${f}: em dash`); assert(!/director/i.test(t), `${f}: use Facilitator`); assert(!/confirm\(/.test(t), `${f}: confirm() is blocked in some viewers`); }
