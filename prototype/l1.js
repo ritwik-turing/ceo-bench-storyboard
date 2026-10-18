@@ -1026,6 +1026,90 @@ const TASK = {
      true
     ]
    }
+  ],
+  "insideSegments": [
+   {
+    "header": [
+     "Quarter",
+     "Gross Shipping",
+     "Credits",
+     "Net Shipping"
+    ],
+    "rows": [
+     [
+      "Q1",
+      "40,000",
+      "0",
+      "40,000"
+     ],
+     [
+      "Q2",
+      "45,000",
+      "0",
+      "45,000"
+     ],
+     [
+      "Q3",
+      "52,000",
+      "-12,000",
+      "40,000"
+     ],
+     [
+      "Q4",
+      "47,000",
+      "0",
+      "47,000"
+     ],
+     [
+      "Total FY Fulfillment & Shipping",
+      "184,000",
+      "-12,000",
+      "172,000"
+     ]
+    ]
+   }
+  ],
+  "insideSummary": [
+   {
+    "header": [
+     "Deliverable / Integrity Check",
+     "Target Value",
+     "Actual Value (Linked)",
+     "Tie-Out Status"
+    ],
+    "rows": [
+     [
+      "1. FY Fulfillment & Shipping (Net of Q3 $12k credit)",
+      "172,000",
+      "172,000",
+      "PASS"
+     ],
+     [
+      "2. Ending Accounts Payable",
+      "58,844",
+      "58,844",
+      "PASS"
+     ],
+     [
+      "3. AP Reconciliation Difference",
+      "0",
+      "0",
+      "PASS"
+     ],
+     [
+      "3a. Sum of Invoices (Reference)",
+      "850,359",
+      "850,359",
+      "PASS"
+     ],
+     [
+      "4. Lost-Sales Figure Check (Unbooked)",
+      "0",
+      "0",
+      "PASS"
+     ]
+    ]
+   }
   ]
  },
  "train": {

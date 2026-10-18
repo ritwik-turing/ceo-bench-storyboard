@@ -159,11 +159,14 @@ function expertScore(pod,trained){
 const TODAY = 'A';
 const L3 = {name:'Prepare Cirrus Sleep for its first external audit', role:'Controller', hours:'~100 hours'};
 const L1S = {A:[{name:'Reconcile June cash: bank statement against the books', today:true}, {name:'Age the open receivables at month end'}, {name:'Log payment exceptions with an owner for each'}]};
-/* How each pilot run is labelled: model (effort) with harness. null = not yet confirmed with Jeff, shown as "to confirm". */
+/* How each pilot run is labelled: model (effort) with harness. Best assumptions for the July 2026 runs; confirm with Jeff. */
 const MODEL_CONFIG = {
- Claude:{model:'Claude Opus 5.5', effort:'xhigh', harness:'Claude Code'},
- ChatGPT:{model:'GPT-5.6 Sol', effort:null, harness:'ChatGPT'},
- Gemini:{model:null, effort:null, harness:'Gemini CLI'}};
+ Claude:{model:'Claude Opus 5', effort:'xhigh', harness:'Claude Code'},
+ ChatGPT:{model:'GPT-5.6 Sol', effort:'xhigh', harness:'Codex'},
+ Gemini:{model:'Gemini 3.1 Pro', effort:'high', harness:'Gemini CLI'}};
+/* Step 8 "after training" is illustrative: the voided run from step 6, redone correctly. missed = checks still missed after training. */
+const AFTER = {missed:['C-37'],
+ segments:[{header:['Quarter', 'Net fulfillment & shipping', 'Source'], rows:[['Q1', '8,000', 'IS_Monthly!N10'], ['Q2', '28,000', 'IS_Monthly!O10'], ['Q3', '48,000', 'IS_Monthly!P10 · net of the $12,000 Apex credit'], ['Q4', '88,000', 'IS_Monthly!Q10'], ['FY2021', '172,000', 'PnL_Quarterly!F10']]}]};
 /* Step 10 kicker: the parent L2 task contains the same judgment. Placeholder checks and anonymous model results until Jeff supplies real per-criterion results. */
 const L2GAP = {name:'Board model inputs: operations cost and AP', hours:'10–20 hours', models:['Model A', 'Model B', 'Model C', 'Model D'],
  checks:[
@@ -173,4 +176,4 @@ const L2GAP = {name:'Board model inputs: operations cost and AP', hours:'10–20
   {text:'Ties ending accounts payable to $58,844 with a $0 variance', points:10, mustPass:false, models:[true, false, false, false], trained:false}],
  before:'FY2021 board model inputs. Fulfillment and shipping: $184,000 for the year (Apex credit applied separately in the AP schedule). Sources: P&L Monthly, Operations Fulfillment tab. Apex incident: $45,000 lost revenue recorded against Q3. Ending AP: $58,844.',
  after:'FY2021 board model inputs. Fulfillment and shipping: $172,000 for the year, net of the $12,000 Apex credit booked in September (IS_Monthly, PnL_Quarterly, Apex_Crisis). Apex incident: ~$45,000 lost sales held as a memo, not booked. Ending AP: $58,844; reconciliation variance still being traced.'};
-if(typeof module!=='undefined') module.exports={MODEL_CONFIG,L2GAP,TODAY,L3,L1S,SEATS,TASKS,DEPARTMENTS,EXTRA_FILES,TRAINED,validateSubmission,scoreRubric,expertScore};
+if(typeof module!=='undefined') module.exports={AFTER,MODEL_CONFIG,L2GAP,TODAY,L3,L1S,SEATS,TASKS,DEPARTMENTS,EXTRA_FILES,TRAINED,validateSubmission,scoreRubric,expertScore};

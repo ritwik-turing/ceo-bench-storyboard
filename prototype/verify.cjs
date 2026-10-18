@@ -3,7 +3,7 @@ const fs = require('node:fs'), path = require('node:path'), assert = require('no
 const read = f => fs.readFileSync(path.join(__dirname, f), 'utf8');
 const { STEPS, MANDATE } = require('./content.js');
 const { CORPUS } = require('./corpus.js');
-const { MODEL_CONFIG, L2GAP, validateSubmission } = require('./data.js');
+const { AFTER, MODEL_CONFIG, validateSubmission } = require('./data.js');
 const { TASK } = require('./l1.js');
 const app = read('app.js');
 assert.equal(STEPS.length, 9);
@@ -29,6 +29,8 @@ assert(C.models.every(m => m.score < 100 || m.void), 'every model lost points on
 assert(C.models.some((m, i) => m.l1pass && C.checks.some(k => /Fulfillment/.test(k.area) && !k.met[i])), 'a model that passed the L1 misses the same fulfillment checks inside');
 for (const m of T.models) assert(MODEL_CONFIG[m.name]?.harness, `${m.name}: harness label`);
 // Training remains a placeholder.
-assert(L2GAP.checks.filter(c => c.trained).length > L2GAP.checks.filter(c => c.models[0]).length, 'training improves the gap checks');
+assert(T.catch.checks.filter(k => !AFTER.missed.includes(k.id)).length > T.catch.checks.filter(k => k.met[2]).length, 'training improves the step 6 checks');
+assert(T.catch.insideSegments[0].rows.at(-1).includes('172,000'), 'the real voided run still totals 172,000');
+for (const n of ['Claude', 'ChatGPT', 'Gemini']) assert(MODEL_CONFIG[n].model && MODEL_CONFIG[n].effort && MODEL_CONFIG[n].harness, `${n}: full label`);
 for (const f of ['index.html','app.js','content.js']) { const t = read(f); assert(!t.includes('—'), `${f}: em dash`); assert(!/director/i.test(t), `${f}: use Facilitator`); assert(!/confirm\(/.test(t), `${f}: confirm() is blocked in some viewers`); }
 console.log(`PASS: 9 steps and runthrough, real corpus (${CORPUS.totalFiles} files), real L1 ${T.id}: ${T.models.map(m => m.name + ' ' + (m.pass ? m.total : 'DQ')).join(', ')}, submission checks, copy rules.`);

@@ -1,7 +1,7 @@
 'use strict';
 /* CEO Bench live demo prototype v3. Company data comes from the real corpus (corpus.js). Today's task, its rubric,
    and the three model results are the real L1-04-01 pilot records (l1.js). The L2 gap, training, and re-evaluation
-   are placeholders (L2GAP in data.js). No model is called live. */
+   are illustrative (AFTER in data.js). No model is called live. */
 const $ = s => document.querySelector(s);
 const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const KEY = 'ceo-bench-demo-v3', NOTES_KEY = 'ceo-bench-comments-v3';
@@ -18,7 +18,6 @@ const fmt = n => n.toLocaleString('en-US');
 const M = () => T.models[S.model] || T.models[0];
 // Full label for a pilot run, e.g. "Claude Opus 5.5 (xhigh) with Claude Code". Missing parts read "to confirm".
 const cfg = n => MODEL_CONFIG[n] || {};
-const unconfirmed = n => !cfg(n).model || !cfg(n).effort;
 const label = n => { const c = cfg(n); return `${c.model || `${n} (version to confirm)`} (${c.effort || 'effort to confirm'}) with ${c.harness || 'harness to confirm'}`; };
 const labelHTML = n => { const c = cfg(n); return `${esc(c.model || n)}<span class="cfg">${esc(c.effort || 'effort to confirm')} · with ${esc(c.harness || 'harness to confirm')}${c.model ? '' : ' · version to confirm'}</span>`; };
 const sim = text => `<div class="sim">${text}</div>`;
@@ -29,7 +28,6 @@ const ring = (value, fail) => { const c = 2 * Math.PI * 30; return `<div class="
 const verdict = m => m.pass ? '<span class="tag good">Passes</span>' : `<span class="tag bad">Disqualified · ${m.failed.join(', ')}</span>`;
 const KIND = {xlsx:'spreadsheets', docx:'documents', doc:'documents', pdf:'PDFs', pptx:'slide decks', csv:'data exports', json:'data exports', png:'images'};
 const kinds = k => Object.entries(Object.entries(k).reduce((a, [x, n]) => (a[KIND[x] || 'other files'] = (a[KIND[x] || 'other files'] || 0) + n, a), {})).map(([x, n]) => `${n} ${x}`).join(' · ');
-const gapScore = met => { const total = L2GAP.checks.reduce((n, c) => n + c.points, 0), earned = L2GAP.checks.reduce((n, c) => n + (met(c) ? c.points : 0), 0); return {total, earned, pct:Math.round(earned / total * 100)}; };
 // The task prompt: the shipped prompt once pasted in, otherwise the one reconstructed from the rubric.
 const prompt = () => S.prompt || PROMPT_DEFAULT;
 const TABLE_TEMPLATE = () => [['Quarter', 'Fulfillment', 'Shipping', 'Total', 'Source tab'], ['Q1', '', '', '', ''], ['Q2', '', '', '', ''], ['Q3', '', '', '', ''], ['Q4', '', '', '', ''], ['FY2021', '', '', '', '']];
@@ -87,7 +85,7 @@ const views = {
   const m = M();
   return `${real('Recorded results from the pilot runs, July 2026 · no model is called live')}
   <div class="models">${T.models.map((x, i) => `<button class="model ${i === S.model ? 'on' : ''} ${x.pass ? '' : 'fail'}" data-model="${i}">${ring(x.total, !x.pass)}<div><h3>${labelHTML(x.name)}</h3>${verdict(x)}<p class="small" style="margin-top:6px">${x.pass ? `${x.total} of 100 points` : `Raw ${x.total}, but a must-pass check failed`}</p></div></button>`).join('')}</div>
-  ${T.models.some(x => unconfirmed(x.name)) ? '<p class="small" style="margin:-8px 0 18px">Run configurations are from the July 2026 pilot. Parts marked “to confirm” are awaiting sign-off.</p>' : ''}<div class="callout blue" style="margin-bottom:20px"><b>Two of three pass this short task.</b> ${cfg('ChatGPT').model || 'ChatGPT'} got every number right but cited a spreadsheet tab that does not exist, so must-pass check O3 disqualifies it.</div>
+<div class="callout blue" style="margin-bottom:20px"><b>Two of three pass this short task.</b> ${cfg('ChatGPT').model || 'ChatGPT'} got every number right but cited a spreadsheet tab that does not exist, so must-pass check O3 disqualifies it.</div>
   <div class="work"><div class="stack"><div><span class="label">Output · ${esc(label(m.name))}</span><div class="answer">${segHTML(m.segments)}</div></div><button data-act="rerun-baseline" style="align-self:flex-start">Replay ${m.name}’s run</button></div>
   <div class="table-card"><div class="scroll"><table id="grades"><thead><tr><th>Rubric check · ${esc(label(m.name))}</th><th class="n">Score</th></tr></thead><tbody>${T.rubric.map((r, i) => `<tr class="grade-row" data-row="${i}"><td><button class="linkish" data-detail="crit:${i}">${r.id} · ${esc(r.text)}</button> ${r.mustPass ? '<span class="tag bad">Must-pass</span>' : ''}</td><td class="n g">${S.graded ? pts(m, i) : '<span class="small">…</span>'}</td></tr>`).join('')}</tbody></table></div><div class="submitbar" id="grade-total">${S.graded ? gradeTotal() : '<button class="primary" data-act="grade">Grade with the rubric</button>'}</div></div></div>`; },
 
@@ -97,7 +95,8 @@ const views = {
   <div class="gap-head"><div class="card"><span class="label">On its own · ${T.id}</span><h3>${T.name}</h3><p>1–3 hours</p><div class="row" style="margin-top:12px">${T.models.map(m => m.pass ? `<span class="tag good">${esc(label(m.name))} · ${m.total}</span>` : `<span class="tag bad">${esc(label(m.name))} · disqualified</span>`).join('')}</div></div><div class="arrow">→</div>
   <div class="card dark"><span class="label">Inside the bigger job · ${c.id}</span><h3>${c.name}</h3><p>All five small tasks combined into one board-inputs workbook, with the same quarterly numbers inside.</p><div class="row" style="margin-top:12px">${c.models.map(chip).join('')}</div></div></div>
   ${S.gap ? `<div class="table-card reveal"><div class="scroll"><table><thead><tr><th>Check inside the combined task · ${c.checks.length} of ${c.totalChecks} shown</th><th class="n">Pts</th>${c.models.map(m => `<th class="c">${labelHTML(m.name)}</th>`).join('')}</tr></thead><tbody>${c.checks.map(k => `<tr class="${/Fulfillment/.test(k.area) ? 'same' : ''}"><td>${k.id} · ${esc(k.text)} ${k.mustPass ? '<span class="tag bad">Must-pass</span>' : ''}<div class="small">${esc(k.area)}</div></td><td class="n">${k.points}</td>${k.met.map(ok => `<td class="c">${mark(ok)}</td>`).join('')}</tr>`).join('')}<tr class="sum"><td><b>Points on these ${c.checks.length} checks</b></td><td class="n">${c.checks.reduce((n, k) => n + k.points, 0)}</td>${c.models.map((m, mi) => `<td class="c"><b>${c.checks.reduce((n, k) => n + (k.met[mi] ? k.points : 0), 0)}</b></td>`).join('')}</tr><tr class="sum total"><td><b>Total score, all ${c.totalChecks} checks</b></td><td class="n">100</td>${c.models.map(m => `<td class="c"><b>${m.score}</b>${m.void ? '<div class="bad small">voided</div>' : ''}</td>`).join('')}</tr></tbody></table></div></div>
-  <div class="callout" style="margin-top:18px"><b>Gemini got the quarterly numbers right on their own (91/100). Inside the combined task, it got those same numbers wrong and could not trace its sources, so it was voided.</b> Every model lost points once the job got longer.</div>` : '<button class="primary big" data-act="gap">Show what happened inside the bigger job</button>'}`; },
+  <div class="grid g2" style="margin-top:18px"><div class="card"><span class="label">${esc(cfg('Gemini').model)} on its own · 91/100</span>${segHTML(T.models.find(m => m.name === 'Gemini').segments.filter(x => x.rows).slice(0, 1))}</div><div class="card"><span class="label bad">${esc(cfg('Gemini').model)} inside the bigger job · voided</span>${segHTML(T.catch.insideSegments)}<p class="small">Invented quarters that still add up to $172,000.</p></div></div>
+  <div class="callout" style="margin-top:18px"><b>${esc(cfg('Gemini').model)} got the quarterly numbers right on their own. Inside the bigger job, it invented different quarters that still add up to $172,000, so it was voided.</b> Every agent lost points once the job got longer.</div>` : '<button class="primary big" data-act="gap">Show what happened inside the bigger job</button>'}`; },
 
  // 7 · Preview the expert-curated dataset, then train on it
  7: () => { const rows = datasetParts();
@@ -106,15 +105,16 @@ const views = {
    <table class="ds"><thead><tr><th>Expert input</th><th class="n">Size</th><th>Used in training as</th></tr></thead><tbody>${rows.map(r => `<tr><td><b>${r.name}</b></td><td class="n">${r.size}</td><td><span class="dim">${r.use}</span></td></tr>`).join('')}</tbody></table>
    <div class="row" style="margin-top:14px"><button class="primary" data-detail="dataset:">Preview the dataset</button><span class="small">AI labs receive the full dataset. This view shows a sample.</span></div></div>
    <div class="card"><span class="label">2 · Train on it</span><p style="margin-bottom:12px">This task is one of about ${T.l1Count} in the training set. A separate set of tasks, including yours, is held out for evaluation.</p><button class="primary big" data-act="train">${S.trained ? '↻ Train again' : '▶ Train on the expert dataset'}</button></div></div>
-  <div class="stack"><div class="curve-card"><div class="row between"><span class="label" style="margin:0">Reward on the long task</span><span class="small" id="train-status">${S.trained ? 'Training complete · checkpoint saved' : 'Not started'}</span></div><svg class="curve" viewBox="0 0 100 100" preserveAspectRatio="none" aria-label="Reward during training">${[25, 50, 75].map(y => `<line x1="0" x2="100" y1="${y}" y2="${y}"/>`).join('')}<polygon id="area" points="${S.trained ? area(curvePoints(60)) : ''}"/><polyline id="curve" points="${S.trained ? curvePoints(60) : ''}"/></svg><div class="row between small"><span>Start</span><span>Training steps →</span></div></div>
+  <div class="stack"><div class="curve-card"><div class="row between"><span class="label" style="margin:0">Average reward across the training set</span><span class="small" id="train-status">${S.trained ? 'Training complete · checkpoint saved' : 'Not started'}</span></div><svg class="curve" viewBox="0 0 100 100" preserveAspectRatio="none" aria-label="Reward during training">${[25, 50, 75].map(y => `<line x1="0" x2="100" y1="${y}" y2="${y}"/>`).join('')}<polygon id="area" points="${S.trained ? area(curvePoints(60)) : ''}"/><polyline id="curve" points="${S.trained ? curvePoints(60) : ''}"/></svg><div class="row between small"><span>Start</span><span>Training steps →</span></div></div>
    <div class="card"><span class="label">The training signal</span><div class="signals ${S.trained ? 'on' : ''}" id="signals">${rows.map(r => `<div class="signal"><span class="pip"></span><div><b>${r.short}</b><div class="small">${r.use}</div></div></div>`).join('')}</div></div></div></div>`; },
 
- // 8 · After training: trained run and re-evaluation
+ // 8 · After training: the voided run from step 6 (real) beside the same job after training (illustrative), on the same checks
  8: () => { if (!S.trained) return `<div class="launch"><h3>Train the model first.</h3><button data-go="7" class="primary">Go to training</button></div>`;
-  const a = gapScore(c => c.models[0]), b = gapScore(c => c.trained);
-  return `${sim('Pre-built checkpoint, recorded replay, illustrative scores')}<div class="work"><div class="stack"><div><span class="label">The agent on the long task · before training</span><pre>${esc(L2GAP.before)}</pre></div>${S.trainedRun ? `<div><span class="label">The agent on the long task · after training</span><pre>${esc(L2GAP.after)}</pre></div><button data-act="rerun-trained" style="align-self:flex-start">Replay the trained run</button>` : '<div id="stage" class="launch"><h3>Same agent, after training, on the long task.</h3><button class="primary big" data-act="run-trained">▶ Run the trained agent</button></div>'}</div>
-  ${S.trainedRun ? `<div class="stack"><div class="card hot"><span class="label">Gap checks · illustrative</span><div class="big-stat">${b.earned}<small>/${b.total}</small></div><p style="margin-top:6px">Up from ${a.earned} before training.</p><div class="bars" style="margin-top:16px"><div class="bar"><span>Before</span><div class="track"><span class="before" style="width:${a.pct}%"></span></div><span>${a.earned}/${a.total}</span></div><div class="bar"><span>After</span><div class="track"><span class="after" style="width:${b.pct}%"></span></div><span>${b.earned}/${b.total}</span></div></div></div>
-   <div class="table-card"><table><thead><tr><th>Check</th><th class="c">Before</th><th class="c">After</th></tr></thead><tbody>${L2GAP.checks.map(c => `<tr><td>${esc(c.text)}</td><td class="c">${mark(c.models[0])}</td><td class="c">${mark(c.trained)}</td></tr>`).join('')}</tbody></table></div></div>` : '<div></div>'}</div>`; },
+  const c = T.catch, gi = c.models.findIndex(m => m.name === 'Gemini'), shown = c.checks.reduce((n, k) => n + k.points, 0);
+  const before = c.checks.reduce((n, k) => n + (k.met[gi] ? k.points : 0), 0), after = c.checks.reduce((n, k) => n + (AFTER.missed.includes(k.id) ? 0 : k.points), 0);
+  return `${sim('Before is the real voided run from step 6 · after training is illustrative')}<div class="work"><div class="stack"><div class="card"><span class="label bad">Before training · ${esc(label('Gemini'))} · real</span>${segHTML(c.insideSegments)}<p class="small">Invented quarters; voided.</p></div>${S.trainedRun ? `<div class="card hot"><span class="label">After training · the same job · illustrative</span>${segHTML(AFTER.segments)}<p class="small">Quarters match the records, each traced to its source.</p></div><button data-act="rerun-trained" style="align-self:flex-start">Replay the trained run</button>` : '<div id="stage" class="launch"><h3>The same agent, after training, on the same bigger job.</h3><button class="primary big" data-act="run-trained">▶ Run the trained agent</button></div>'}</div>
+  ${S.trainedRun ? `<div class="stack"><div class="card hot"><span class="label">Same checks as step 6</span><div class="big-stat">${after}<small>/${shown}</small></div><p style="margin-top:6px">Up from ${before} before training, and every must-pass check is now met.</p><div class="bars" style="margin-top:16px"><div class="bar"><span>Before</span><div class="track"><span class="before" style="width:${Math.round(before / shown * 100)}%"></span></div><span>${before}/${shown}</span></div><div class="bar"><span>After</span><div class="track"><span class="after" style="width:${Math.round(after / shown * 100)}%"></span></div><span>${after}/${shown}</span></div></div></div>
+   <div class="table-card"><table><thead><tr><th>Check</th><th class="c">Before</th><th class="c">After</th></tr></thead><tbody>${c.checks.map(k => `<tr><td>${k.id} · ${esc(k.text)}</td><td class="c">${mark(k.met[gi])}</td><td class="c">${mark(!AFTER.missed.includes(k.id))}</td></tr>`).join('')}</tbody></table></div></div>` : '<div></div>'}</div>`; },
 
  // 9 · Recap
  9: () => `<p class="big">${esc(STEPS[8].say)}</p><div class="loop">${[[3, 'Create a task', 'You wrote the golden answer and rubric'], [5, 'Evaluate', 'Two of three models passed'], [6, 'Find the gap', 'Long tasks break them'], [7, 'Train', 'Learn from graded attempts'], [8, 'Evaluate again', 'The gap closes']].map(([n, l, d], i) => `<button data-go="${n}"><small>${i + 1} · ${l}</small>${d}</button>`).join('')}</div>`
@@ -155,7 +155,8 @@ function detail(key) {
 
 // Illustrative score curve from the before score to the after score on the gap checks.
 function curvePoints(n) {
- const lo = gapScore(c => c.models[0]).pct, hi = gapScore(c => c.trained).pct;
+ const c = T.catch, gi = c.models.findIndex(m => m.name === 'Gemini'), shown = c.checks.reduce((n, k) => n + k.points, 0);
+ const lo = Math.round(c.checks.reduce((n, k) => n + (k.met[gi] ? k.points : 0), 0) / shown * 100), hi = Math.round(c.checks.reduce((n, k) => n + (AFTER.missed.includes(k.id) ? 0 : k.points), 0) / shown * 100);
  return Array.from({length:n}, (_, i) => { const t = i / 59, y = lo + (hi - lo) * (1 - Math.exp(-4 * t)) / (1 - Math.exp(-4)) + Math.sin(i * 1.7) * 3 * (1 - t); return `${(t * 100).toFixed(1)},${(100 - y).toFixed(1)}`; }).join(' ');
 }
 const area = pts => pts ? `${pts} ${pts.split(' ').pop().split(',')[0]},100 0,100` : '';
@@ -172,10 +173,10 @@ function grade() {
   S.graded = true; save(); $('#grade-total').innerHTML = gradeTotal(); })();
 }
 function replay(trained) {
- const id = ++runId, text = trained ? L2GAP.after : M().answer;
- const acts = trained ? [{label:`Read the department task: ${L2GAP.name}, full year`}, {label:'Open 12 months of records'}, {label:'Open the source tabs', doc:T.files[0].body}, {label:'Match each month and quarter'}, {label:'Carry open items forward'}, {label:'Write the year-end schedule'}]
+ const id = ++runId, text = trained ? tableText([AFTER.segments[0].header, ...AFTER.segments[0].rows]) : M().answer;
+ const acts = trained ? [{label:`Read the bigger job: ${T.catch.name}`}, {label:'Open 12 months of records'}, {label:'Open the source tabs', doc:T.files[0].body}, {label:'Match each month and quarter'}, {label:'Carry open items forward'}, {label:'Write the year-end schedule'}]
   : [{label:`Read the task: ${T.question}`}, ...T.files.map(f => ({label:`Open ${f.ref} · ${f.name}`, doc:f.body})), {label:'Decide: before or after the $12,000 credit?'}, {label:'Write the Fulfillment_Shipping_by_Q tab'}];
- $('#stage').outerHTML = `<div id="stage">${screen(trained ? 'Trained agent · L2-04' : `${label(M().name)} · ${T.id}`, `<div><span class="label">Input</span><ol id="log"></ol><pre class="peek" id="doc" hidden></pre></div><div><span class="label">Output · the model’s answer</span><pre id="out" class="wide"></pre></div>`)}</div>`;
+ $('#stage').outerHTML = `<div id="stage">${screen(trained ? `Trained agent · ${T.catch.id}` : `${label(M().name)} · ${T.id}`, `<div><span class="label">Input</span><ol id="log"></ol><pre class="peek" id="doc" hidden></pre></div><div><span class="label">Output · the model’s answer</span><pre id="out" class="wide"></pre></div>`)}</div>`;
  let i = 0, n = 0;
  (function step() { if (id !== runId || !$('#log')) return;
   if (i < acts.length) { const a = acts[i++]; $('#log').insertAdjacentHTML('beforeend', `<li>${esc(a.label)}</li>`); if (a.doc) { $('#doc').hidden = false; $('#doc').textContent = a.doc; } return setTimeout(step, 850); }

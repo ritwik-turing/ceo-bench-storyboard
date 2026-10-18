@@ -45,9 +45,9 @@ const STEPS = [
   "time": "48:00–56:00",
   "title": "Run eval: three frontier agents try your task",
   "sub": "Each model gets the same prompt and files you had. The rubric scores every check.",
-  "say": "All three agents got exactly what you got. Claude scored 97 and Gemini 91. GPT-5.6 Sol got every number right, but it cited a spreadsheet tab that does not exist, so a must-pass check disqualified it. On a short task like this, models mostly do well, and we expect that. Same numbers, different outcomes: the model that invented a source loses the must-pass check and the whole attempt fails. In training, this scoring runs automatically on every attempt.",
+  "say": "All three agents got exactly what you got. Claude Opus 5 scored 97 and Gemini 3.1 Pro 91. GPT-5.6 Sol got every number right, but it cited a spreadsheet tab that does not exist, so a must-pass check disqualified it. On a short task like this, agents mostly do well, and we expect that. Here is the scoring, check by check. Same numbers, different outcomes: the agent that invented a source loses the must-pass check and the whole attempt fails. In training, this scoring runs automatically on every attempt.",
   "cue": "Press Run and let the replay play. Then read the three results. Open GPT-5.6 Sol’s answer and point at the made-up “P&L Monthly” source. Then open the check-by-check grades and stop on GPT-5.6 Sol’s check O3.",
-  "disclose": "Real recorded results from the L1 pilot runs. Confirm model versions and run dates with Jeff before naming them to press. The replay animates the saved answer; no model is called live. Recorded grades from the pilot rubric analysis.",
+  "disclose": "Real recorded results from the L1 pilot runs (July 2026). Model versions, effort settings, and harnesses (Claude Opus 5 xhigh with Claude Code, GPT-5.6 Sol xhigh with Codex, Gemini 3.1 Pro high with Gemini CLI) are best assumptions; confirm with Jeff before press. The replay animates each saved answer; no model is called live.",
   "short": "Model eval"
  },
  {
@@ -55,8 +55,8 @@ const STEPS = [
   "time": "56:00–60:00",
   "title": "The catch: the same numbers inside a bigger job",
   "sub": "Your task on its own, then the task that combines all five small tasks, with how each model did.",
-  "say": "You did this in about 40 minutes, and two of three models passed. Now here is the bigger job it belongs to: all five small tasks combined into one board-inputs workbook, with the same quarterly numbers inside. Gemini got those numbers right on their own. Inside the combined task, it got the very same numbers wrong and could not trace its sources, so it was voided. Every model lost points. Short tasks are easy; long, real work is where models break. That is the gap CEO Bench measures.",
-  "cue": "Read the two score rows: on its own, then inside the bigger job. Press the button, then point at the highlighted fulfillment rows in Gemini’s column. Then read the two total rows: points on these checks, and the full score out of 100.",
+  "say": "You did this in about 40 minutes, and two of three agents passed. Now here is the bigger job it belongs to: all five small tasks combined into one board-inputs workbook. Gemini 3.1 Pro got the quarterly numbers right on its own: 8,000, 28,000, 48,000, 88,000. Inside the bigger job it invented different quarters, 40,000, 45,000, 52,000, 47,000, that still add up to $172,000, and it was voided. Every agent lost points. Short tasks are easy; long, real work is where agents break. That is the gap CEO Bench measures.",
+  "cue": "Read the two score rows, press the button, then show the two Gemini tables side by side. Point at how the invented quarters still add up to $172,000. Then read the two total rows.",
   "disclose": "Real recorded results from the pilot: L1-04-06 assembles L1-04-01 to L1-04-05 into the board-inputs workbook, the closest real evidence to the L2-04 deliverable. L2-04 model runs themselves are not available. Confirm model versions before naming them to press.",
   "short": "The catch"
  },
@@ -65,7 +65,7 @@ const STEPS = [
   "time": "60:00–63:00",
   "title": "Post-training: Reinforcement learning to hill-climb the eval",
   "sub": "This task is one of about 30 in the training set. A separate set of tasks is held out for evaluation.",
-  "say": "Here is one task from the training set: L1-04-02, the treatment of the $12,000 Apex credit. It is similar to yours and uses the same company files, but it is a different task. Yours is held out for evaluation; training on it would just teach the model the answer. For each training task, the experts produce the source files, a golden answer, a rubric with weights and must-pass gates, graded attempts, and grader notes. The rubric is the reward, and reinforcement learning hill-climbs it across the whole training set.",
+  "say": "Here is one task from the training set: L1-04-02, the treatment of the $12,000 Apex credit. It is similar to yours and uses the same company files, but it is a different task. Yours is held out for evaluation; training on it would just teach the model the answer. For each training task, the experts produce the source files, a golden answer, a rubric with weights and must-pass gates, graded attempts, and grader notes. The rubric is the reward, and reinforcement learning hill-climbs it across the whole training set. The curve shows the average reward across the training set climbing as training runs.",
   "cue": "Open Preview the dataset and read a few rows. Point out that this is a different task from theirs, and that theirs is held out. Then press Train on the expert dataset.",
   "disclose": "The training-task data is real (L1-04-02 pilot files). The training-set size (about 30, from the roughly 30 L1s that passed QC), the reward definition, and the training run are illustrative.",
   "short": "Training"
@@ -73,11 +73,11 @@ const STEPS = [
  {
   "act": "Train the agent",
   "time": "63:00–67:00",
-  "title": "After training: the long task, graded again",
-  "sub": "The same agent on the department task, before and after training, scored on the same checks.",
-  "say": "This is the same agent after training, on the department task. It now keeps the cost net of the credit, cites only tabs that exist, and holds the lost sales as a memo. We grade it on the same checks, and the judgment it lost before now holds up. That is how Turing helps labs close the gap between short tasks and real work.",
-  "cue": "Press Run trained agent. When it finishes, read the checks that flipped and the new score.",
-  "disclose": "Pre-built checkpoint and recorded replay. No model is called live. Placeholder checks and illustrative results until real runs exist. Claim improvement on these checks only.",
+  "title": "After training: the bigger job, graded again",
+  "sub": "The voided run from the last screen, then the same job after training, scored on the same checks.",
+  "say": "On the left is the run that was voided on the last screen, exactly as it happened: invented quarters that happen to add up. After training, the same job comes back with quarters that match the records, each traced to its source, and every must-pass check met. Same checks, a much higher score. That is how Turing helps labs close the gap between short tasks and real work.",
+  "cue": "Show the real voided run on the left. Press Run the trained agent. When it finishes, read the score and the checks that flipped.",
+  "disclose": "The before run is real (Gemini 3.1 Pro on L1-04-06, July 2026 pilot). The after-training output and scores are illustrative; no real post-training run exists for this demo. Do not present the after column as a measured result.",
   "short": "After training"
  },
  {
@@ -85,9 +85,9 @@ const STEPS = [
   "time": "67:00–69:00",
   "title": "Congrats, you trained superintelligence today",
   "sub": "Create a task, evaluate, find the gap, train, and evaluate again.",
-  "say": "Congrats! You trained your own superintelligence. You created a task and evaluated a frontier agent on it. When the agent could not complete the task, you provided expert data and used reinforcement learning to help it improve. You then evaluated the model again and found that it had learned to perform the task well. Now you can use this specialized agent reliably to complete similar tasks. You are officially an expert in the Turing network. This is how Turing helps frontier labs such as OpenAI, Anthropic, Google DeepMind, and Meta specialize their agents to deliver real economic impact. We are also taking the same data factory to help the Fortune 500 enterprises train their own custom models.",
+  "say": "Congrats! You trained your own superintelligence. You created a task and evaluated frontier agents on it. When they broke down on the bigger job, you provided expert data and used reinforcement learning to help them improve. You then evaluated again and found the agent had learned to do the job well. Now you can use this specialized agent reliably to complete similar tasks. You are officially an expert in the Turing network. This is how Turing helps frontier labs such as OpenAI, Anthropic, Google DeepMind, and Meta specialize their agents to deliver real economic impact. We are also taking the same data factory to help the Fortune 500 enterprises train their own custom models.",
   "cue": "Show the loop. Open questions after this screen.",
-  "disclose": "Supplied summary text, edited per Chander (POTUS line removed, enterprise line added). It still says the agent “could not complete the task,” which no longer fits the flow, and it names 4 labs.",
+  "disclose": "Supplied summary text, edited to match the flow (agents broke down on the bigger job), with the POTUS line removed and the enterprise line added. It names 4 labs; confirm that is approved.",
   "short": "Recap"
  }
 ];

@@ -296,3 +296,8 @@ tr.bad-row td{background:#fff3f2}
 tr.bad-row input{border-color:#f5c6c2}
 tr.sum td{background:var(--soft);border-top:1px solid var(--line2)}
 tr.sum.total td{background:var(--ink);color:#fff}tr.sum.total .bad{color:#ff9b93}
+/* Phone-width fixes: grid children may shrink, long paths wrap, the dataset table drops its size column */
+.grid>*{min-width:0}
+.source h4{flex-wrap:wrap}
+.path{overflow-wrap:anywhere}
+@media(max-width:900px){table.ds .n{display:none}table.ds td,table.ds th{white-space:normal}}
