@@ -866,6 +866,7 @@ const TASK = {
   }
  ],
  "catch": {
+  "totalChecks": 44,
   "id": "L1-04-06",
   "name": "Assemble the board-inputs workbook from all five tasks",
   "file": "Cirrus_Sleep_FY2021_Ops_AP_BoardInputs.xlsx",
@@ -1026,6 +1027,362 @@ const TASK = {
     ]
    }
   ]
- }
+ },
+ "train": {
+  "id": "L1-04-02",
+  "name": "Treatment of the $12,000 Apex credit in Q3",
+  "rubric": [
+   {
+    "id": "O1",
+    "text": "Q3 net Fulfillment & Shipping stated and net of the SLA credit",
+    "expected": "Q3 net = $48,000 (net of the $12,000 credit)",
+    "points": 10,
+    "mustPass": true,
+    "note": "All three state Q3 net = $48,000."
+   },
+   {
+    "id": "O2",
+    "text": "FY2021 F&S reconciled and its gross/net status stated, aligned to L1-01",
+    "expected": "FY = $172,000, explicitly NET of the credit (aligns L1-01)",
+    "points": 10,
+    "mustPass": true,
+    "note": "All three state FY $172,000 as net of the credit / align L1-01."
+   },
+   {
+    "id": "O3",
+    "text": "Apex SLA credit amount identified, confirmed to fulfillment and to Q3",
+    "expected": "Credit = $(12,000); applies to fulfillment; belongs in Q3",
+    "points": 8,
+    "mustPass": true,
+    "note": "All three carry credit $(12,000) into Q3 fulfillment."
+   },
+   {
+    "id": "O4",
+    "text": "Q3 gross before the credit stated",
+    "expected": "Q3 gross before credit = $60,000",
+    "points": 6,
+    "mustPass": false,
+    "note": "Q3 gross $60,000 shown by all three."
+   },
+   {
+    "id": "O5",
+    "text": "The three no-credit quarters carried correctly",
+    "expected": "Q1 $8,000 · Q2 $28,000 · Q4 $88,000",
+    "points": 6,
+    "mustPass": false,
+    "note": "Q1 $8,000 / Q2 $28,000 / Q4 $88,000 correct in all three."
+   },
+   {
+    "id": "O6",
+    "text": "Credit placed in the correct month (September, not August)",
+    "expected": "Sep net $6,000 / gross $18,000; Aug carries no credit",
+    "points": 5,
+    "mustPass": false,
+    "note": "Gemini shows no monthly split, so Sep placement is unevidenced (0)."
+   },
+   {
+    "id": "O7",
+    "text": "FY gross-before-credit and the gross-to-net bridge shown",
+    "expected": "FY gross $184,000; $184,000 − $12,000 = $172,000",
+    "points": 4,
+    "mustPass": false,
+    "note": "Only ChatGPT shows FY gross $184,000 bridge; Gemini & Claude omit it."
+   },
+   {
+    "id": "O8",
+    "text": "Credit origin identified and cross-referenced",
+    "expected": "August Apex stockout / SLA breach; cross-ref L1-05",
+    "points": 6,
+    "mustPass": false,
+    "note": "Origin = Aug Apex / L1-05 noted by all three."
+   },
+   {
+    "id": "S1",
+    "text": "Q3 netted as three explicit, auditable lines",
+    "expected": "Q3 gross → SLA credit ($12,000) → Q3 net",
+    "points": 10,
+    "mustPass": true,
+    "note": "Three explicit lines (gross→credit→net) present in all three."
+   },
+   {
+    "id": "S2",
+    "text": "Tie-out / control check to the canonical FY figure",
+    "expected": "Reconciliation to $172,000 with difference = $0",
+    "points": 6,
+    "mustPass": false,
+    "note": "ChatGPT & Claude include a $0-difference control; Gemini has none."
+   },
+   {
+    "id": "S3",
+    "text": "Monthly detail supporting the quarterly totals",
+    "expected": "12-month detail that ties to each quarter",
+    "points": 5,
+    "mustPass": false,
+    "note": "ChatGPT full 12-month; Claude Q3-only (partial 2); Gemini none."
+   },
+   {
+    "id": "S4",
+    "text": "Source references to file / tab / cell (or evidence map)",
+    "expected": "Named canonical sources per figure (not generic refs)",
+    "points": 6,
+    "mustPass": false,
+    "note": "ChatGPT Evidence_Map tab; Claude inline canonical IDs (5); Gemini generic only."
+   },
+   {
+    "id": "S5",
+    "text": "Clear, labeled, uncluttered schedule",
+    "expected": "Readable structure; not padded with restated blocks",
+    "points": 2,
+    "mustPass": false,
+    "note": "ChatGPT padded/2 tabs (1); Gemini & Claude clean (2)."
+   },
+   {
+    "id": "J1",
+    "text": "Explicit safeguard against re-deducting the credit",
+    "expected": "Warns not to re-deduct; states Q3 $36,000 / FY $160,000 trap",
+    "points": 8,
+    "mustPass": false,
+    "note": "Claude full numeric trap; ChatGPT warns w/o numbers (5); Gemini none."
+   },
+   {
+    "id": "J2",
+    "text": "Lost-sales estimate handled correctly",
+    "expected": "$45,000 lost sales = MEMO / never booked",
+    "points": 5,
+    "mustPass": false,
+    "note": "ChatGPT & Claude hold $45,000 as MEMO; Gemini omits it."
+   },
+   {
+    "id": "J3",
+    "text": "Origin & treatment narrative an auditor can follow",
+    "expected": "Traceable rationale for the credit's origin & booking",
+    "points": 3,
+    "mustPass": false,
+    "note": "Claude richest origin narrative (3); ChatGPT solid (2); Gemini thin (1)."
+   }
+  ],
+  "models": [
+   {
+    "name": "Claude",
+    "scores": [
+     10,
+     10,
+     8,
+     6,
+     6,
+     5,
+     0,
+     6,
+     10,
+     6,
+     2,
+     5,
+     2,
+     8,
+     5,
+     3
+    ],
+    "total": 92,
+    "pass": true,
+    "failed": []
+   },
+   {
+    "name": "ChatGPT",
+    "scores": [
+     10,
+     10,
+     8,
+     6,
+     6,
+     5,
+     4,
+     6,
+     10,
+     6,
+     5,
+     6,
+     1,
+     5,
+     5,
+     2
+    ],
+    "total": 95,
+    "pass": true,
+    "failed": []
+   },
+   {
+    "name": "Gemini",
+    "scores": [
+     10,
+     10,
+     8,
+     6,
+     6,
+     0,
+     0,
+     6,
+     10,
+     0,
+     0,
+     0,
+     2,
+     0,
+     0,
+     1
+    ],
+    "total": 59,
+    "pass": true,
+    "failed": []
+   }
+  ],
+  "goldenSegments": [
+   {
+    "note": "Cirrus Sleep — FY2021 Fulfillment & Shipping by Fiscal Quarter"
+   },
+   {
+    "note": "Audit treatment of the $12,000 Apex SLA credit  ·  reconciles to canonical FY [IS.FULF.FY] = $172,000 (aligns L1-01)"
+   },
+   {
+    "note": "Q3 is netted as three explicit lines: Q3 gross  →  Apex SLA credit ($12,000)  →  Q3 net. The FY figure is NET of the credit, not gross. Origin of the credit: L1-05 (August Apex stockout / SLA breach)."
+   },
+   {
+    "note": "Legend:   blue = canonical input      black = formula      green = source reference       USD, whole dollars."
+   },
+   {
+    "header": [
+     "Line item",
+     "Quarter",
+     "Amount ($)",
+     "Formula / derivation",
+     "Source (file › tab!cell / canonical ID)",
+     "Basis / treatment · L1 cross-ref"
+    ],
+    "rows": [
+     [
+      "Q1 net booked F&S",
+      "Q1",
+      "8,000",
+      "SUMIFS(C6:C17,B6:B17,\"Q1\")",
+      "[IS.FULF.Q1] Bible §6.2 · P&L Quarterly",
+      "Net booked F&S; no credit in Q1 · L1-01"
+     ],
+     [
+      "Q2 net booked F&S",
+      "Q2",
+      "28,000",
+      "SUMIFS(C6:C17,B6:B17,\"Q2\")",
+      "[IS.FULF.Q2] Bible §6.2 · P&L Quarterly",
+      "Net booked F&S; no credit in Q2 · L1-01"
+     ],
+     [
+      "Q3 gross before Apex SLA credit",
+      "Q3",
+      "60,000",
+      "SUMIFS(E6:E17,B6:B17,\"Q3\")",
+      "Ops Fulfillment_Shipping (Jul+Aug+Sep gross)",
+      "Gross operating view before the credit · L1-05"
+     ],
+     [
+      "Apex SLA credit",
+      "Q3",
+      "-12,000",
+      "SUMIFS(D6:D17,B6:B17,\"Q3\")",
+      "[APEX.CREDIT] Bible §6.8 · Apex_Crisis!$12,000 (Sep)",
+      "Credit memo from Aug Apex breach; netted in Q3/Sep · L1-05"
+     ],
+     [
+      "Q3 net booked F&S",
+      "Q3",
+      "48,000",
+      "C9+C10",
+      "[IS.FULF.Q3] Bible §6.2 · P&L Monthly!H15:J15",
+      "Booked Q3 expense that flows to statements · L1-01+L1-05"
+     ],
+     [
+      "Q4 net booked F&S",
+      "Q4",
+      "88,000",
+      "SUMIFS(C6:C17,B6:B17,\"Q4\")",
+      "[IS.FULF.Q4] Bible §6.2 · P&L Quarterly",
+      "Net booked F&S; no credit in Q4 · L1-01"
+     ],
+     [
+      "FY gross before Apex SLA credit",
+      "FY2021",
+      "184,000",
+      "C7+C8+C9+C12",
+      "Q1+Q2+Q3 gross+Q4 · Board_Inputs",
+      "Gross F&S before the credit (bridge start)"
+     ],
+     [
+      "FY Apex SLA credit",
+      "FY2021",
+      "-12,000",
+      "C10",
+      "[APEX.CREDIT] Bible §6.8",
+      "Only booked accounting impact of the Apex event"
+     ],
+     [
+      "FY net booked F&S",
+      "FY2021",
+      "172,000",
+      "C13+C14",
+      "[IS.FULF.FY] Bible §6.2 · P&L Quarterly!N15",
+      "$172,000 is NET of the credit, not gross · L1-01"
+     ]
+    ]
+   },
+   {
+    "note": "CONTROLS — tie-out (each difference must equal $0)"
+   },
+   {
+    "header": [
+     "L1-01 canonical source value (FY F&S)",
+     "",
+     "172,000",
+     "hardcoded canonical target",
+     "[IS.FULF.FY] · Year-End Lead Sheets · P&L Quarterly!N15",
+     "Expected FY value (hardcoded check)"
+    ],
+    "rows": [
+     [
+      "Reconciliation: FY net − L1-01 source",
+      "",
+      "0",
+      "C15-C18",
+      "control",
+      "Must equal $0"
+     ],
+     [
+      "Q3 treatment: Q3 net − (Q3 gross + credit)",
+      "",
+      "0",
+      "C11-(C9+C10)",
+      "control",
+      "Must equal $0"
+     ]
+    ]
+   },
+   {
+    "note": "NOTES — treatment, safeguards & origin"
+   },
+   {
+    "note": "• Do NOT deduct the credit again. $48,000 (Q3) and $172,000 (FY) are already NET of the $12,000 credit. Re-deducting would double-count — Q3 would fall to $36,000 and FY to $160,000 — breaking the tie-out to canonical net loss ($665,333). The three Q3 lines above are a DISPLAY decomposition of the already-net figure, not a new deduction."
+   },
+   {
+    "note": "• Credit placement: the $12,000 credit is booked in SEPTEMBER (Sep net $6,000 ≈ $18,000 gross − $12,000). August is the Apex stockout month but carries NO embedded credit. See Monthly_Detail."
+   },
+   {
+    "note": "• Lost-sales estimate: the ~$45,000 revenue lost to the Apex stockout is [APEX.LOSTREV] — a MEMO only; it is never booked and does not enter this schedule."
+   },
+   {
+    "note": "• Origin (L1-05): the credit arises from the August Apex stockout / SLA breach — Port-of-LA backlog → Ontario dock; NovaTex truck deprioritized; ~4,000 units delayed ~3 weeks; CS-STD-01 / CS-KNG-01 / CS-BDL-CPL stocked out; NPS 45→31. Cross-ref: Bible §4 (Apex), §6.8 [APEX.*], Apex_Crisis tab."
+   },
+   {
+    "note": "• This schedule is display / validation only; it does not alter any canonical figure in the trusted Bible or Canonical Facts workbook."
+   }
+  ]
+ },
+ "l1Count": 30
 };
 if(typeof module!=='undefined') module.exports={TASK};

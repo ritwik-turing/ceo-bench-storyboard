@@ -110,15 +110,19 @@ const SEATS = {
   criterion('Assigns reconciliation to Finance',10,false,'Obtain and review an order-level bridge.',false,'The reconciliation action is missing.')]
  }
 };
+// Blank rows are ignored; every other row needs a description and 1–100 points, and the rows must total 100.
 function validateSubmission(sub) {
- const errors=[];
- if(!sub.name?.trim()) errors.push('Add your name.');
- if(!sub.deliverable?.trim()) errors.push('Write your deliverable.');
- const rows=sub.rubric||[];
- if(rows.length<10||rows.length>20)errors.push('Write 10–20 criteria.');
- if(rows.some(r=>!r.text?.trim()))errors.push('Complete every criterion.');
- if(rows.some(r=>!Number.isFinite(Number(r.points))||Number(r.points)<=0||Number(r.points)>100))errors.push('Each weight must be greater than 0 and at most 100.');
- if(Math.abs(rows.reduce((s,r)=>s+Number(r.points),0)-100)>.001)errors.push('Weights must total 100.');
+ const errors=[], all=sub.rubric||[], str=v=>String(v??'').trim();
+ if(!str(sub.deliverable)) errors.push('Write your golden answer on the previous screen.');
+ const rows=all.filter(r=>str(r.text)||str(r.points));
+ if(rows.length<3) errors.push('Write at least 3 criteria.');
+ if(rows.length>20) errors.push('Use at most 20 criteria.');
+ all.forEach((r,i)=>{ const t=str(r.text), p=str(r.points), n=Number(p);
+  if(!t&&!p) return;
+  if(!t) errors.push(`Row ${i+1}: describe what the answer must do.`);
+  if(!p||!Number.isFinite(n)||n<=0||n>100) errors.push(`Row ${i+1}: give it between 1 and 100 points.`); });
+ const total=rows.reduce((s,r)=>s+(Number(str(r.points))||0),0);
+ if(rows.length&&Math.abs(total-100)>.001) errors.push(`The points total ${total}; they must total 100.`);
  return errors;
 }
 function scoreRubric(rows,marks){

@@ -43,10 +43,10 @@ const STEPS = [
  {
   "act": "Evaluate the agent",
   "time": "48:00–56:00",
-  "title": "Model eval: three AI models try your task",
+  "title": "Run eval: three frontier agents try your task",
   "sub": "Each model gets the same prompt and files you had. The rubric scores every check.",
-  "say": "Three of today’s leading AI models got exactly what you got. Claude scored 97 and Gemini 91. ChatGPT got every number right, but it cited a spreadsheet tab that does not exist, so a must-pass check disqualified it. On a short task like this, models mostly do well, and we expect that. Same numbers, different outcomes: the model that invented a source loses the must-pass check and the whole attempt fails. In training, this scoring runs automatically on every attempt.",
-  "cue": "Press Run and let the replay play. Then read the three results. Open ChatGPT’s answer and point at the made-up “P&L Monthly” source. Then open the check-by-check grades and stop on ChatGPT’s check O3.",
+  "say": "All three agents got exactly what you got. Claude scored 97 and Gemini 91. GPT-5.6 Sol got every number right, but it cited a spreadsheet tab that does not exist, so a must-pass check disqualified it. On a short task like this, models mostly do well, and we expect that. Same numbers, different outcomes: the model that invented a source loses the must-pass check and the whole attempt fails. In training, this scoring runs automatically on every attempt.",
+  "cue": "Press Run and let the replay play. Then read the three results. Open GPT-5.6 Sol’s answer and point at the made-up “P&L Monthly” source. Then open the check-by-check grades and stop on GPT-5.6 Sol’s check O3.",
   "disclose": "Real recorded results from the L1 pilot runs. Confirm model versions and run dates with Jeff before naming them to press. The replay animates the saved answer; no model is called live. Recorded grades from the pilot rubric analysis.",
   "short": "Model eval"
  },
@@ -56,18 +56,18 @@ const STEPS = [
   "title": "The catch: the same numbers inside a bigger job",
   "sub": "Your task on its own, then the task that combines all five small tasks, with how each model did.",
   "say": "You did this in about 40 minutes, and two of three models passed. Now here is the bigger job it belongs to: all five small tasks combined into one board-inputs workbook, with the same quarterly numbers inside. Gemini got those numbers right on their own. Inside the combined task, it got the very same numbers wrong and could not trace its sources, so it was voided. Every model lost points. Short tasks are easy; long, real work is where models break. That is the gap CEO Bench measures.",
-  "cue": "Read the two score rows: on its own, then inside the bigger job. Press the button, then point at the highlighted fulfillment rows in Gemini’s column.",
+  "cue": "Read the two score rows: on its own, then inside the bigger job. Press the button, then point at the highlighted fulfillment rows in Gemini’s column. Then read the two total rows: points on these checks, and the full score out of 100.",
   "disclose": "Real recorded results from the pilot: L1-04-06 assembles L1-04-01 to L1-04-05 into the board-inputs workbook, the closest real evidence to the L2-04 deliverable. L2-04 model runs themselves are not available. Confirm model versions before naming them to press.",
   "short": "The catch"
  },
  {
   "act": "Train the agent",
   "time": "60:00–63:00",
-  "title": "Reinforcement learning: train on the expert data",
-  "sub": "Preview the expert-curated dataset, then train. Every expert input is part of the training signal.",
-  "say": "Before training starts, here is everything the experts produced, packaged the way an AI lab receives it: the task and its source files, the golden answer, the rubric with its weights and must-pass gates, every graded attempt, and the grader notes. AI labs receive the full set; here you can preview a few rows. Each of these is a dimension of training. The files are the environment, the golden answer shows what good looks like, the rubric is the reward, the must-pass checks are hard limits, and the graded attempts are the examples the model learns from.",
-  "cue": "Open Preview the dataset and read a few rows. Then read the “Used in training as” column and press Train on the expert dataset.",
-  "disclose": "The dataset contents are real L1-04-01 pilot data. Journalists see a preview only; nothing is downloadable. The reward definition and the training run are illustrative.",
+  "title": "Post-training: Reinforcement learning to hill-climb the eval",
+  "sub": "This task is one of about 30 in the training set. A separate set of tasks is held out for evaluation.",
+  "say": "Here is one task from the training set: L1-04-02, the treatment of the $12,000 Apex credit. It is similar to yours and uses the same company files, but it is a different task. Yours is held out for evaluation; training on it would just teach the model the answer. For each training task, the experts produce the source files, a golden answer, a rubric with weights and must-pass gates, graded attempts, and grader notes. The rubric is the reward, and reinforcement learning hill-climbs it across the whole training set.",
+  "cue": "Open Preview the dataset and read a few rows. Point out that this is a different task from theirs, and that theirs is held out. Then press Train on the expert dataset.",
+  "disclose": "The training-task data is real (L1-04-02 pilot files). The training-set size (about 30, from the roughly 30 L1s that passed QC), the reward definition, and the training run are illustrative.",
   "short": "Training"
  },
  {
@@ -85,9 +85,9 @@ const STEPS = [
   "time": "67:00–69:00",
   "title": "Congrats, you trained superintelligence today",
   "sub": "Create a task, evaluate, find the gap, train, and evaluate again.",
-  "say": "Congrats! You trained your own superintelligence, or SI, as our POTUS would say. You created a task and evaluated a frontier agent on it. When the agent could not complete the task, you provided expert data and used reinforcement learning to help it improve. You then evaluated the model again and found that it had learned to perform the task well. Now you can use this specialized agent reliably to complete similar tasks. You are officially an expert in the Turing network. This is how Turing helps frontier labs such as OpenAI, Anthropic, Google DeepMind, and Meta specialize their agents to deliver real economic impact.",
+  "say": "Congrats! You trained your own superintelligence. You created a task and evaluated a frontier agent on it. When the agent could not complete the task, you provided expert data and used reinforcement learning to help it improve. You then evaluated the model again and found that it had learned to perform the task well. Now you can use this specialized agent reliably to complete similar tasks. You are officially an expert in the Turing network. This is how Turing helps frontier labs such as OpenAI, Anthropic, Google DeepMind, and Meta specialize their agents to deliver real economic impact. We are also taking the same data factory to help the Fortune 500 enterprises train their own custom models.",
   "cue": "Show the loop. Open questions after this screen.",
-  "disclose": "Supplied summary text. Under Jeff’s flow the agent passed the small task and lost points in the long one, so \"when the agent could not complete the task\" needs Chander’s rewrite. Also confirm the POTUS line, \"frontier agent\", the \"reliably\" claim, and naming the 4 labs.",
+  "disclose": "Supplied summary text, edited per Chander (POTUS line removed, enterprise line added). It still says the agent “could not complete the task,” which no longer fits the flow, and it names 4 labs.",
   "short": "Recap"
  }
 ];
@@ -99,4 +99,6 @@ const MANDATE = [
  {label:'Your evidence', value:'The supplied company records only', detail:'Every number and conclusion must be derivable from files that ship with the task. If the records do not establish something, the answer has to say so.'}
 ];
 const HELP = {criterion:['What a good criterion looks like', 'A criterion is 1 checkable requirement. Someone else should be able to read the answer and decide “met” or “not met” without guessing.<br><br><b>Good:</b> “Reports the bank closing balance as $118,000.”<br><b>Too vague:</b> “Understands the cash position.”<br><br>Make a criterion must-pass when missing it is a professional-integrity failure: inventing a number, missing a conflict in the records, or relying on an unsigned document.']};
-if(typeof module!=='undefined') module.exports={STEPS,MANDATE,HELP};
+/* Today's task prompt, reconstructed from the L1-04-01 rubric's prompt-sourced checks. The Step 3 button replaces it with the shipped prompt. */
+const PROMPT_DEFAULT = 'Using Cirrus_Sleep_Canonical_Facts_Trusted.xlsx, build a tab named Fulfillment_Shipping_by_Q showing FY2021 fulfillment and shipping cost for Q1 to Q4 and the full year, with columns Quarter | Fulfillment | Shipping | Total. Cite the source tab and cell for every figure. In a basis note, say whether the full-year total is gross or net of the $12,000 Apex SLA credit, with evidence. Do not apply the credit here; that is handled in task L1-04-02. If the records do not separate fulfillment from shipping, flag it rather than estimate.';
+if(typeof module!=='undefined') module.exports={PROMPT_DEFAULT,STEPS,MANDATE,HELP};

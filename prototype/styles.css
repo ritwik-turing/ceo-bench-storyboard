@@ -286,3 +286,13 @@ table.ds td{padding:9px 10px;font-size:12.5px}
 th .cfg{white-space:normal}
 .model h3 .cfg{font-size:12px}
 th.c{text-transform:none;letter-spacing:0;font-size:12px;color:var(--ink)}
+
+/* Answer table editor and invalid rubric rows */
+table.data.edit td{padding:4px;white-space:normal}
+table.data.edit input{border:1px solid transparent;border-radius:6px;padding:6px 8px;font-size:12.5px;min-width:96px;background:transparent}
+table.data.edit input:focus{border-color:var(--bright);background:#fff}
+table.data.edit input.th{font-weight:600;background:var(--soft)}
+tr.bad-row td{background:#fff3f2}
+tr.bad-row input{border-color:#f5c6c2}
+tr.sum td{background:var(--soft);border-top:1px solid var(--line2)}
+tr.sum.total td{background:var(--ink);color:#fff}tr.sum.total .bad{color:#ff9b93}
