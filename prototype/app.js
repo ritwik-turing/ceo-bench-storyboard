@@ -161,27 +161,27 @@ function curvePoints(n) {
 }
 const area = pts => pts ? `${pts} ${pts.split(' ').pop().split(',')[0]},100 0,100` : '';
 function train() {
- const id = ++runId; let n = 0; S.trained = false;
+ const id = ++runId; let n = 0; S.trained = true; S.trainedRun = false; save(); // recorded up front; the curve is only animation
  (function step() { if (id !== runId || !$('#curve')) return; n += 1; const p = curvePoints(n); $('#curve').setAttribute('points', p); $('#area').setAttribute('points', area(p)); $('#train-status').textContent = `Training step ${fmt(n * 50)} of 3,000`;
-  $('#signals')?.classList.add('on'); if (n < 60) return setTimeout(step, 150); S.trained = true; S.trainedRun = false; save(); render(); })();
+  $('#signals')?.classList.add('on'); if (n < 60) return setTimeout(step, 150); render(); })();
 }
 // Fills in the score column one check at a time.
 function grade() {
- const id = ++runId; let i = 0; $('#grade-total').innerHTML = '<span class="small">Grading…</span>';
+ const id = ++runId; let i = 0; S.graded = true; save(); $('#grade-total').innerHTML = '<span class="small">Grading…</span>'; // recorded up front; the row-by-row fill is only animation
  (function step() { if (id !== runId || !$('#grades')) return;
   if (i < T.rubric.length) { const row = $(`#grades [data-row="${i}"]`); row.querySelector('.g').innerHTML = pts(M(), i); row.classList.add('flash'); i++; return setTimeout(step, 380); }
-  S.graded = true; save(); $('#grade-total').innerHTML = gradeTotal(); })();
+  $('#grade-total').innerHTML = gradeTotal(); })();
 }
 function replay(trained) {
  const id = ++runId, text = trained ? tableText([AFTER.segments[0].header, ...AFTER.segments[0].rows]) : M().answer;
  const acts = trained ? [{label:`Read the bigger job: ${T.catch.name}`}, {label:'Open 12 months of records'}, {label:'Open the source tabs', doc:T.files[0].body}, {label:'Match each month and quarter'}, {label:'Carry open items forward'}, {label:'Write the year-end schedule'}]
   : [{label:`Read the task: ${T.question}`}, ...T.files.map(f => ({label:`Open ${f.ref} · ${f.name}`, doc:f.body})), {label:'Decide: before or after the $12,000 credit?'}, {label:'Write the Fulfillment_Shipping_by_Q tab'}];
  $('#stage').outerHTML = `<div id="stage">${screen(trained ? `Trained agent · ${T.catch.id}` : `${label(M().name)} · ${T.id}`, `<div><span class="label">Input</span><ol id="log"></ol><pre class="peek" id="doc" hidden></pre></div><div><span class="label">Output · the model’s answer</span><pre id="out" class="wide"></pre></div>`)}</div>`;
- let i = 0, n = 0;
+ let i = 0, n = 0; S[trained ? 'trainedRun' : 'baseline'] = true; save(); // recorded up front; the replay is only animation
  (function step() { if (id !== runId || !$('#log')) return;
   if (i < acts.length) { const a = acts[i++]; $('#log').insertAdjacentHTML('beforeend', `<li>${esc(a.label)}</li>`); if (a.doc) { $('#doc').hidden = false; $('#doc').textContent = a.doc; } return setTimeout(step, 850); }
   n += 4; $('#out').textContent = text.slice(0, n); if (n < text.length) return setTimeout(step, 18);
-  S[trained ? 'trainedRun' : 'baseline'] = true; save(); setTimeout(() => id === runId && render(), 900); })();
+  setTimeout(() => id === runId && render(), 900); })();
 }
 function updateSum() { const el = $('#sum'); if (el) el.innerHTML = meter(points(work().rubric)); }
 // Counts the numbers on step 1 up from zero.
@@ -284,10 +284,10 @@ const DEMO = [
  {say:'Break the 100-hour job down to the task you will do', run:async d => { await d.wait(1800); await d.click('[data-act="reveal"]', 1600); await d.click('[data-act="open-l2"]', 2800); }},
  {say:'Write the golden answer from the source tabs', run:async d => { await d.click('[data-act="example"]', 3200); }},
  {say:'Write the rubric, then submit the task', run:async d => { await d.wait(2200); await d.click('[data-act="submit"]', 2200); }},
- {say:'Three AI models try your task: two pass, one is disqualified', run:async d => { await d.click('[data-act="run-baseline"]'); await d.until(() => S.baseline); await d.wait(1600); await d.click('[data-act="grade"]'); await d.until(() => S.graded); await d.wait(1600); await d.click('[data-model="0"]', 2600); }},
+ {say:'Three AI models try your task: two pass, one is disqualified', run:async d => { await d.click('[data-act="run-baseline"]'); await d.until(() => $('.models')); await d.wait(1600); await d.click('[data-act="grade"]'); await d.until(() => $('#grade-total') && !/Grading/.test($('#grade-total').textContent)); await d.wait(1600); await d.click('[data-model="0"]', 2600); }},
  {say:'The catch: the same numbers inside a bigger job', run:async d => { await d.wait(1500); await d.click('[data-act="gap"]', 4500); }},
- {say:'Preview the expert data, then train on all of it', run:async d => { await d.wait(1500); await d.click('[data-detail="dataset:"]', 3200); await d.click('[data-act="close-detail"]', 500); await d.click('[data-act="train"]'); await d.until(() => S.trained); await d.wait(1500); }},
- {say:'After training: the long task, graded again', run:async d => { await d.click('[data-act="run-trained"]'); await d.until(() => S.trainedRun); await d.wait(4000); }},
+ {say:'Preview the expert data, then train on all of it', run:async d => { await d.wait(1500); await d.click('[data-detail="dataset:"]', 3200); await d.click('[data-act="close-detail"]', 500); await d.click('[data-act="train"]'); await d.until(() => /complete/.test($('#train-status')?.textContent || '')); await d.wait(1500); }},
+ {say:'After training: the long task, graded again', run:async d => { await d.click('[data-act="run-trained"]'); await d.until(() => $('.big-stat')); await d.wait(4000); }},
  {say:'Recap: create, evaluate, find the gap, train, evaluate again', run:async d => { await d.wait(5000); }}
 ];
 function demoBar(i) {
@@ -302,7 +302,7 @@ async function startDemo() {
  const wait = ms => new Promise((res, rej) => setTimeout(() => id === demo.id ? res() : rej('stopped'), ms / DEMO_SPEED));
  const d = {wait,
   async click(sel, after = 0, before = 700) { const el = $(sel); if (!el) return; el.scrollIntoView({block:'center', behavior:'smooth'}); el.classList.add('demo-target'); await wait(before); el.classList.remove('demo-target'); el.click(); await wait(after); },
-  async until(done) { for (let n = 0; n < 600 && !done(); n++) await wait(100 * DEMO_SPEED); }};
+  async until(done) { for (let n = 0; n < 200 && !done(); n++) await wait(100 * DEMO_SPEED); }};
  try { for (let i = 0; i < DEMO.length; i++) { go(i + 1); demoBar(i); await DEMO[i].run(d); } demo.done = true; } catch (stopped) { if (stopped !== 'stopped') throw stopped; return; }
  demo.playing = false; demoBar();
 }
