@@ -3,7 +3,7 @@ const STEPS = [
  {
   "act": "The company",
   "time": "00:00–04:00",
-  "title": "Cirrus Sleep: a company built to test AI",
+  "title": "Cirrus Sleep: A company that sells pillows",
   "sub": "A simulated company with a complete year of real working records. Open any department to see them.",
   "say": "Cirrus Sleep is a company that never existed. Experts built its entire first year: the books, contracts, payroll, board decks, support tickets, and months of internal Slack. Over a thousand files, all connected. Here it is department by department. Open any file and you see the real record. Everything you do today comes from these records.",
   "cue": "Read out 2 or 3 of the numbers, then open 2 departments and a day of Slack. Introduce Simulated Virtual Company (SVC) once.",
@@ -26,7 +26,7 @@ const STEPS = [
   "title": "Golden answer: do the task yourself",
   "sub": "The expert’s correct answer. Today, the expert is you.",
   "say": "Complete the task yourself, using only the files in your packet. Connect every conclusion to its source. If the records disagree, say so. Your answer is the golden answer: the standard every AI attempt is measured against. You are doing exactly what our experts do.",
-  "cue": "Keep the big screen quiet. Help with navigation and arithmetic, not findings. Remind pods to cite file names at the midpoint.",
+  "cue": "Keep the big screen quiet. Help with navigation and arithmetic, not findings. Remind pods to cite file names at the midpoint. For a quick run, open See expert’s answer, copy it, and paste it into the answer box.",
   "disclose": "Real task L1-04-01. The prompt on screen is summarized from the rubric until the exact shipped prompt is added. Source tabs are excerpts of Cirrus_Sleep_Canonical_Facts_Trusted.xlsx.",
   "short": "Golden answer"
  },

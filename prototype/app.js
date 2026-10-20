@@ -30,10 +30,36 @@ const KIND = {xlsx:'spreadsheets', docx:'documents', doc:'documents', pdf:'PDFs'
 const kinds = k => Object.entries(Object.entries(k).reduce((a, [x, n]) => (a[KIND[x] || 'other files'] = (a[KIND[x] || 'other files'] || 0) + n, a), {})).map(([x, n]) => `${n} ${x}`).join(' · ');
 // The task prompt: the shipped prompt once pasted in, otherwise the one reconstructed from the rubric.
 const prompt = () => S.prompt || PROMPT_DEFAULT;
-const TABLE_TEMPLATE = () => [['Quarter', 'Fulfillment', 'Shipping', 'Total', 'Source tab'], ['Q1', '', '', '', ''], ['Q2', '', '', '', ''], ['Q3', '', '', '', ''], ['Q4', '', '', '', ''], ['FY2021', '', '', '', '']];
 const tableText = t => t ? t.map(r => r.join(' | ')).join('\n') : '';
-const answerText = w => [w.deliverable, w.table && w.table.slice(1).some(r => r.some(c => String(c).trim())) ? tableText(w.table) : ''].filter(x => String(x || '').trim()).join('\n\n');
-const editTable = t => `<div class="tbl"><table class="data edit"><tbody>${t.map((r, i) => `<tr>${r.map((c, j) => `<td><input type="text" data-tc="${i},${j}" value="${esc(c)}" aria-label="${i ? `Row ${i}, column ${j + 1}` : `Column ${j + 1} heading`}" class="${i ? '' : 'th'}"></td>`).join('')}</tr>`).join('')}</tbody></table></div><div class="row"><button data-act="t-row">+ Row</button><button data-act="t-col">+ Column</button><button data-act="t-del">Remove table</button></div>`;
+// The answer box is a small rich-text editor, so tables live inside the answer. Stored HTML is cleaned to text, paragraphs, and tables.
+const ALLOWED = new Set(['P', 'DIV', 'BR', 'B', 'STRONG', 'I', 'EM', 'U', 'UL', 'OL', 'LI', 'TABLE', 'THEAD', 'TBODY', 'TR', 'TH', 'TD', 'SPAN']);
+function cleanHTML(html) {
+ const doc = new DOMParser().parseFromString(`<div>${html}</div>`, 'text/html'), root = doc.body.firstChild;
+ (function walk(n) { [...n.children].forEach(c => { if (!ALLOWED.has(c.tagName)) { c.replaceWith(...(['SCRIPT', 'STYLE', 'IFRAME', 'OBJECT'].includes(c.tagName) ? [] : c.childNodes)); return walk(n); }
+  [...c.attributes].forEach(a => { if (!['colspan', 'rowspan'].includes(a.name)) c.removeAttribute(a.name); }); walk(c); }); })(root);
+ return root.innerHTML;
+}
+const answerText = w => String(w.deliverable || '').trim();
+const TABLE_HTML = '<table><thead><tr><th>Quarter</th><th>Fulfillment</th><th>Shipping</th><th>Total</th><th>Source tab</th></tr></thead><tbody>' + ['Q1', 'Q2', 'Q3', 'Q4', 'FY2021'].map(q => `<tr><td>${q}</td><td><br></td><td><br></td><td><br></td><td><br></td></tr>`).join('') + '</tbody></table><p><br></p>';
+const segsToHTML = segs => segs.map(s => s.note ? `<p>${esc(s.note)}</p>` : `<table><thead><tr>${s.header.map(h => `<th>${esc(h)}</th>`).join('')}</tr></thead><tbody>${s.rows.map(r => `<tr>${r.map(c => `<td>${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table>`).join('');
+const segsToText = segs => segs.map(s => s.note ? s.note : [s.header, ...s.rows].map(r => r.join('\t')).join('\n')).join('\n\n');
+function saveAnswer() { const ed = $('#answer'); if (!ed) return; const w = work(); w.answerHTML = cleanHTML(ed.innerHTML); w.deliverable = ed.innerText.trim(); w.submitted = false; save(); }
+// Inserts HTML at the caret inside the answer box, or at its end if the caret is elsewhere.
+function insertIntoAnswer(html) {
+ const ed = $('#answer'); if (!ed) return; const sel = getSelection();
+ if (!sel.rangeCount || !ed.contains(sel.anchorNode)) { ed.focus(); const r = document.createRange(); r.selectNodeContents(ed); r.collapse(false); sel.removeAllRanges(); sel.addRange(r); }
+ const range = sel.getRangeAt(0); range.deleteContents(); const frag = range.createContextualFragment(html), last = frag.lastChild; range.insertNode(frag);
+ if (last) { const r = document.createRange(); r.setStartAfter(last); r.collapse(true); sel.removeAllRanges(); sel.addRange(r); }
+ saveAnswer();
+}
+function caretCell() { const n = getSelection().anchorNode, el = n && (n.nodeType === 1 ? n : n.parentElement); return el && $('#answer')?.contains(el) ? el.closest('td,th') : null; }
+// Step 4: errors and the Submit button update as you type.
+function updateSubmit() {
+ const box = $('#submit-status'); if (!box) return; const w = work(), errors = validateSubmission({deliverable:answerText(w), rubric:w.rubric}), bad = new Set(errors.map(e => (e.match(/^Row (\d+)/) || [])[1]).filter(Boolean).map(n => n - 1));
+ box.innerHTML = submitStatus(errors); $('[data-act="submit"]').disabled = errors.length > 0;
+ document.querySelectorAll('.rubric tbody tr').forEach((tr, i) => tr.classList.toggle('bad-row', bad.has(i)));
+}
+const submitStatus = errors => errors.length ? `<ul class="errors">${errors.map(e => `<li>${e}${/golden answer/.test(e) ? ' <button class="linkish" data-go="3">Go to step 3</button>' : ''}</li>`).join('')}</ul>` : '<span class="good">Format checks pass: every criterion has points and they total 100.</span>';
 const isNum = c => /^-?\$?[\d,]+(\.\d+)?$/.test(c);
 // Renders a sheet as notes and real tables. hl marks rows to highlight (e.g. the line the task is about).
 const segHTML = (segs, hl = /Fulfillment|SLA credit|FY Total|FY2021/i) => segs.map(s => s.note ? `<p class="seg-note">${esc(s.note)}</p>` : `<div class="tbl"><table class="data ${s.header.length <= 3 ? 'wrap' : ''}"><thead><tr>${s.header.map(h => `<th>${esc(h)}</th>`).join('')}</tr></thead><tbody>${s.rows.map(r => `<tr class="${hl.test(r[0]) ? 'hl' : ''}">${r.map(c => `<td class="${isNum(c) ? 'n' : ''}">${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`).join('');
@@ -70,15 +96,15 @@ const views = {
    : `<div class="task-card"><div class="row between"><span class="label" style="margin:0">Task prompt · ${T.id}</span><button data-act="prompt-edit">${S.prompt ? 'Edit prompt' : 'Replace with the original prompt'}</button></div><p style="margin-top:8px;white-space:pre-wrap">${esc(prompt())}</p><p class="small" style="margin-top:8px">${S.prompt ? 'Original prompt, pasted in.' : 'Reconstructed from the rubric. Paste the shipped prompt to replace it.'}</p></div>`;
   return `<div class="work"><div class="stack">${promptCard}
    ${T.files.map(f => `<div class="source"><h4><span class="ref">${f.ref}</span>${esc(f.name)}<span class="path">${T.source} › ${f.tab}</span></h4>${segHTML(f.segments)}</div>`).join('')}</div>
-   <div class="stack">${w.example ? `<div class="expert"><div class="row between"><span class="label" style="margin:0">Expert’s golden answer · ${T.id}_Golden.xlsx</span><button data-act="own">Write my own instead</button></div>${segHTML(T.goldenSegments)}</div>` : `<div><span class="label">Your golden answer</span><textarea data-f="deliverable" placeholder="Your findings, with the source tab for each. Before or after the $12,000 credit? What can’t the records split?" aria-label="Your golden answer" style="min-height:${w.table ? 160 : 300}px">${esc(w.deliverable)}</textarea></div>
-    ${w.table ? `<div class="stack" style="gap:10px"><span class="label" style="margin:0">Your table</span>${editTable(w.table)}</div>` : '<button data-act="t-add" style="align-self:flex-start">+ Add a table</button>'}
-    <div class="row"><button data-act="example">Fill in the expert’s answer</button><span class="small">Loads the real golden answer and rubric, for a quick run-through.</span></div>`}</div></div>`; },
+   <div class="stack"><div class="row between"><span class="label" style="margin:0">Your golden answer</span><button data-act="see-expert">See expert’s answer</button></div>
+    <div class="editor-wrap"><div class="editor-tools" role="toolbar" aria-label="Answer tools"><button data-act="ins-table">+ Table</button><button data-act="ins-row">+ Row</button><button data-act="ins-col">+ Column</button><span class="small">Tables go where your cursor is.</span></div>
+    <div id="answer" class="editor" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Your golden answer" data-ph="Your findings, with the source tab for each. Before or after the $12,000 credit? What can’t the records split?">${w.answerHTML || esc(w.deliverable || '')}</div></div></div></div>`; },
 
  // 4 · Rubric and submit
  4: () => { const w = work(), total = points(w.rubric), errors = validateSubmission({deliverable:answerText(w), rubric:w.rubric}), bad = new Set(errors.map(e => (e.match(/^Row (\d+)/) || [])[1]).filter(Boolean).map(n => n - 1));
   return `<div class="table-card"><div class="scroll"><table class="rubric"><thead><tr><th>#</th><th>What a correct answer must do</th><th class="n">Points</th><th class="c">Must-pass</th><th></th></tr></thead><tbody>${w.rubric.map((r, i) => `<tr class="${bad.has(i) ? 'bad-row' : ''}"><td>${i + 1}</td><td><input type="text" data-r="${i}" data-k="text" value="${esc(r.text)}" placeholder="A checkable requirement" aria-label="Criterion ${i + 1}"></td><td class="n"><input type="number" min="1" max="100" data-r="${i}" data-k="points" value="${esc(r.points)}" aria-label="Points for criterion ${i + 1}"></td><td class="c"><input type="checkbox" data-r="${i}" data-k="mustPass" ${r.mustPass ? 'checked' : ''} aria-label="Must-pass"></td><td><button data-act="del" data-i="${i}" aria-label="Remove criterion ${i + 1}">×</button></td></tr>`).join('')}</tbody></table></div>
-  <div class="submitbar"><div class="row"><button data-act="add" ${w.rubric.length >= 20 ? 'disabled' : ''}>Add a criterion</button><span class="small">3 to 20 criteria. Blank rows are ignored.</span><button data-detail="help:criterion">What makes a good criterion?</button></div><div class="meter" id="sum">${meter(total)}</div></div>
-  <div class="submitbar" style="background:#fff">${errors.length ? `<ul class="errors">${errors.map(e => `<li>${e}</li>`).join('')}</ul>` : '<span class="good">Format checks pass: every criterion has points and they total 100.</span>'}<div class="row">${w.submitted ? '<span class="tag good">Submitted · ready to test an AI</span><button data-detail="sub:">View</button>' : ''}<button class="primary" data-act="submit" ${errors.length ? 'disabled' : ''}>${w.submitted ? 'Submit again' : 'Submit task'}</button></div></div></div>`; },
+  <div class="submitbar"><div class="row"><button data-act="add" ${w.rubric.length >= 20 ? 'disabled' : ''}>Add a criterion</button><span class="small">3 to 20 criteria. Blank rows are ignored.</span><button data-detail="help:criterion">What makes a good criterion?</button><button data-act="expert-rubric">Use the expert’s rubric</button></div><div class="meter" id="sum">${meter(total)}</div></div>
+  <div class="submitbar" style="background:#fff"><div id="submit-status">${submitStatus(errors)}</div><div class="row">${w.submitted ? '<span class="tag good">Submitted · ready to test an AI</span><button data-detail="sub:">View</button>' : ''}<button class="primary" data-act="submit" ${errors.length ? 'disabled' : ''}>${w.submitted ? 'Submit again' : 'Submit task'}</button></div></div></div>`; },
 
  // 5 · Model eval and rubric grading
  5: () => { if (!S.baseline) return `${real('Recorded results from the pilot runs, July 2026 · the replay animates each saved answer')}<div id="stage" class="launch"><h3>All three agents get the same prompt and files you had.</h3><p class="sub">Watch one of them work, then see how all three scored on your rubric.</p><button class="primary big" data-act="run-baseline">▶ Run the agents</button></div>`;
@@ -142,11 +168,12 @@ function detail(key) {
    <span class="label">Golden answer</span>${tbl(g.header.slice(0, 3), g.rows.slice(0, N).map(r => r.slice(0, 3)))}${more(N, g.rows.length)}
    <span class="label">Rubric</span>${tbl(['Check', 'Points', 'Must-pass'], X.rubric.slice(0, N).map(r => [`${r.id} · ${r.text}`, r.points, r.mustPass ? 'Yes' : 'No']))}${more(N, X.rubric.length)}
    <span class="label">Graded attempts</span>${tbl(['Agent', ...X.rubric.slice(0, N).map(r => r.id), 'Total'], X.models.map(m => [label(m.name), ...m.scores.slice(0, N), m.pass ? m.total : `${m.total} (disqualified)`]))}<p class="small" style="margin-top:6px">Showing ${N} of ${X.rubric.length} checks per attempt.</p>`]; }
+ if (kind === 'expert') return [`Expert’s golden answer · ${T.id}_Golden.xlsx`, `<p class="small" style="margin-bottom:12px">Copy it, close this window, and paste it into your answer box (Cmd+V). Tables paste as tables.</p><div class="row" style="margin-bottom:14px"><button class="primary" data-act="copy-golden">Copy golden answer</button><span class="small" id="copy-status"></span></div>${segHTML(T.goldenSegments)}`];
  if (kind === 'mandate') { const m = MANDATE[+id]; return [`${m.label}: ${m.value}`, `<p>${esc(m.detail)}</p>`]; }
  if (kind === 'help') return HELP[id];
  if (kind === 'task') { const [n, name, desc] = TASKS.find(t => t[0] === id); return [`L2 task · ${name}`, `<p>${desc}</p><p style="margin-top:10px">A standalone 10–20 hour department task with its own prompt, golden answer, and rubric. Experts have already completed it.</p>`]; }
  if (kind === 'l1') { const t = T.siblings[+id]; return [`${t.id} · ${t.name}`, t.today ? `<p><b>Your task today.</b> ${esc(prompt())}</p>` : '<p>A 1–3 hour itemized task inside L2-04, with its own prompt, golden answer, rubric, and three recorded model runs. Experts have already completed it.</p>']; }
- if (kind === 'sub') return [`Submitted task · ${T.name}`, `<span class="label">Golden answer${w.example ? ' · expert’s answer' : ''}</span>${w.example ? segHTML(T.goldenSegments) : `<pre>${esc(w.deliverable)}</pre>${w.table ? segHTML([{header:w.table[0], rows:w.table.slice(1)}]) : ''}`}<br><span class="label">Rubric · ${w.rubric.length} criteria</span>${rubricTable(w.rubric)}`];
+ if (kind === 'sub') return [`Submitted task · ${T.name}`, `<span class="label">Golden answer</span><div class="editor read">${w.answerHTML || esc(w.deliverable)}</div><br><span class="label">Rubric · ${w.rubric.length} criteria</span>${rubricTable(w.rubric)}`];
  if (kind === 'crit') { const r = T.rubric[+id]; return [`${r.id} · ${r.text}`, `<p>${r.points} points${r.mustPass ? ' · <span class="tag bad">Must-pass</span>' : ''}</p><p style="margin-top:10px"><b>Expected:</b> ${esc(r.expected)}</p><table style="margin-top:12px"><tbody>${T.models.map(m => `<tr><td>${esc(label(m.name))}</td><td class="n">${pts(m, +id)}</td></tr>`).join('')}</tbody></table>${r.note ? `<p class="small" style="margin-top:10px">Grader’s note: ${esc(r.note)}</p>` : ''}`]; }
  if (id === 'traces') return ['Graded attempts', '<p>Each time the agent tries the department-level task, the rubric grades its answer check by check. The prompt, the answer, and those grades form one training example. Reinforcement learning uses thousands of them, with no human grading in the loop.</p>'];
  if (id === 'golden') return ['Expert golden answers', `<p style="margin-bottom:10px">Every task carries an expert’s correct answer. This is the one for ${T.id}:</p>${segHTML(T.goldenSegments)}`];
@@ -243,12 +270,13 @@ document.addEventListener('click', e => {
  else if (d.act === 'prompt-cancel') S.editPrompt = false;
  else if (d.act === 'prompt-save') { const v = $('#prompt-edit').value.trim(); S.prompt = v && v !== PROMPT_DEFAULT ? v : null; S.editPrompt = false; }
  else if (d.act === 'prompt-reset') { S.prompt = null; S.editPrompt = false; }
- else if (d.act === 't-add') w.table = TABLE_TEMPLATE();
- else if (d.act === 't-row') w.table.push(w.table[0].map(() => ''));
- else if (d.act === 't-col') w.table.forEach((r, i) => r.push(i ? '' : `Column ${r.length + 1}`));
- else if (d.act === 't-del') w.table = null;
- else if (d.act === 'own') Object.assign(w, {deliverable:'', example:false, submitted:false});
- else if (d.act === 'example') Object.assign(w, {deliverable:T.golden, rubric:T.rubric.map(r => ({text:r.text, points:r.points, mustPass:r.mustPass})), example:true, submitted:false});
+ else if (d.act === 'see-expert') { const [title, body] = detail('expert:'); $('#detail-title').textContent = title; $('#detail-body').innerHTML = body; $('#detail').showModal(); return; }
+ else if (d.act === 'copy-golden') { const html = segsToHTML(T.goldenSegments), text = segsToText(T.goldenSegments), ok = () => { $('#copy-status').textContent = 'Copied. Close this window and paste it into your answer.'; };
+  try { navigator.clipboard.write([new ClipboardItem({'text/html':new Blob([html], {type:'text/html'}), 'text/plain':new Blob([text], {type:'text/plain'})})]).then(ok, () => navigator.clipboard.writeText(text).then(ok, () => { $('#copy-status').textContent = 'Copy is blocked here. Select the table below and copy it.'; })); } catch { $('#copy-status').textContent = 'Copy is blocked here. Select the table below and copy it.'; } return; }
+ else if (d.act === 'ins-table') { insertIntoAnswer(TABLE_HTML); return; }
+ else if (d.act === 'ins-row') { const c = caretCell(); if (!c) return insertIntoAnswer(TABLE_HTML); const tr = c.closest('tr'), row = document.createElement('tr'); [...tr.children].forEach(() => { const td = document.createElement('td'); td.innerHTML = '<br>'; row.append(td); }); (tr.parentElement.tagName === 'THEAD' ? tr.closest('table').tBodies[0] || tr.parentElement : tr.parentElement).insertBefore(row, tr.parentElement.tagName === 'THEAD' ? null : tr.nextSibling); saveAnswer(); return; }
+ else if (d.act === 'ins-col') { const c = caretCell(); if (!c) return insertIntoAnswer(TABLE_HTML); const i = [...c.parentElement.children].indexOf(c); c.closest('table').querySelectorAll('tr').forEach(tr => { const cell = document.createElement(tr.parentElement.tagName === 'THEAD' ? 'th' : 'td'); cell.innerHTML = '<br>'; tr.children[i] ? tr.children[i].after(cell) : tr.append(cell); }); saveAnswer(); return; }
+ else if (d.act === 'expert-rubric') { Object.assign(w, {rubric:T.rubric.map(r => ({text:r.text, points:r.points, mustPass:r.mustPass})), submitted:false}); }
  else if (d.act === 'submit') w.submitted = true;
  else if (d.act === 'grade') return grade();
  else if (d.act === 'gap') S.gap = true;
@@ -264,14 +292,14 @@ document.addEventListener('click', e => {
 document.addEventListener('input', e => {
  const d = e.target.dataset, w = work();
  if (e.target.id === 'note-text') { notes[S.step] = e.target.value; saveNotes(); $('#notes-status').textContent = 'Saved in this browser.'; $('#notes-btn').textContent = noteCount() ? `Comments (${noteCount()})` : 'Comment'; $(`#steps [data-go="${S.step}"]`)?.classList.toggle('noted', !!e.target.value.trim()); return; }
- if (d.f) { w[d.f] = e.target.value; w.example = false; w.submitted = false; }
- else if (d.tc) { const [r, c] = d.tc.split(',').map(Number); w.table[r][c] = e.target.value; w.example = false; w.submitted = false; }
- else if (d.r) { w.rubric[+d.r][d.k] = e.target.type === 'checkbox' ? e.target.checked : e.target.value; w.example = false; w.submitted = false; updateSum(); }
+ if (e.target.id === 'answer') return saveAnswer();
+ if (d.f) { w[d.f] = e.target.value; w.submitted = false; }
+ else if (d.r) { w.rubric[+d.r][d.k] = e.target.type === 'checkbox' ? e.target.checked : e.target.value; w.submitted = false; updateSum(); updateSubmit(); }
  else return;
  save();
 });
 document.addEventListener('keydown', e => {
- if ($('#detail').open || e.target.matches('input,textarea') || e.metaKey || e.ctrlKey || e.altKey) return;
+ if ($('#detail').open || e.target.matches('input,textarea,[contenteditable]') || e.metaKey || e.ctrlKey || e.altKey) return;
  if (demo.playing && e.key.startsWith('Arrow')) stopDemo();
  if (e.key === 'ArrowRight') go(S.step + 1); else if (e.key === 'ArrowLeft') go(S.step - 1);
 });
@@ -282,8 +310,8 @@ const demo = {id:0, playing:false, done:false};
 const DEMO = [
  {say:'Meet the company: a year of real records, by department', run:async d => { await d.wait(2500); await d.click('[data-src="d8"]', 2600); await d.click('[data-src="s0"]', 3000); }},
  {say:'Break the 100-hour job down to the task you will do', run:async d => { await d.wait(1800); await d.click('[data-act="reveal"]', 1600); await d.click('[data-act="open-l2"]', 2800); }},
- {say:'Write the golden answer from the source tabs', run:async d => { await d.click('[data-act="example"]', 3200); }},
- {say:'Write the rubric, then submit the task', run:async d => { await d.wait(2200); await d.click('[data-act="submit"]', 2200); }},
+ {say:'Write the golden answer: open the expert’s answer and paste it in', run:async d => { await d.click('[data-act="see-expert"]', 2600); await d.click('[data-act="close-detail"]', 400); await d.click('#answer', 0, 500); insertIntoAnswer(segsToHTML(T.goldenSegments)); await d.wait(2400); }},
+ {say:'Write the rubric, then submit the task', run:async d => { await d.click('[data-act="expert-rubric"]', 1800); await d.click('[data-act="submit"]', 2200); }},
  {say:'Three AI models try your task: two pass, one is disqualified', run:async d => { await d.click('[data-act="run-baseline"]'); await d.until(() => $('.models')); await d.wait(1600); await d.click('[data-act="grade"]'); await d.until(() => $('#grade-total') && !/Grading/.test($('#grade-total').textContent)); await d.wait(1600); await d.click('[data-model="0"]', 2600); }},
  {say:'The catch: the same numbers inside a bigger job', run:async d => { await d.wait(1500); await d.click('[data-act="gap"]', 4500); }},
  {say:'Preview the expert data, then train on all of it', run:async d => { await d.wait(1500); await d.click('[data-detail="dataset:"]', 3200); await d.click('[data-act="close-detail"]', 500); await d.click('[data-act="train"]'); await d.until(() => /complete/.test($('#train-status')?.textContent || '')); await d.wait(1500); }},
@@ -292,7 +320,7 @@ const DEMO = [
 ];
 function demoBar(i) {
  $('#demo-bar').hidden = !demo.playing;
- $('#play').textContent = demo.playing ? '■ Stop demo' : demo.done ? '↻ Replay demo' : '▶ Play demo';
+ $('#play').textContent = demo.playing ? '■ Stop tour' : demo.done ? '↻ Replay tour' : '▶ Start Factory Tour';
  if (i === undefined) return;
  $('#demo-say').textContent = DEMO[i].say; $('#demo-count').textContent = `${i + 1} / ${DEMO.length}`; $('#demo-fill').style.width = `${(i + 1) / DEMO.length * 100}%`;
 }
